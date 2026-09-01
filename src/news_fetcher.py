@@ -66,3 +66,16 @@ def fetch_news_for_watchlist(watchlist: List[str], delay_seconds: float = 1.0) -
         results[ticker] = fetch_news_for_ticker(ticker)
         time.sleep(delay_seconds)
     return results
+
+
+class NewsFetcher:
+    """Object-oriented wrapper for news fetching."""
+
+    def __init__(self, delay_seconds: float = 1.0):
+        self.delay_seconds = delay_seconds
+
+    def fetch(self, ticker: str, max_results: int = MAX_ARTICLES_PER_TICKER) -> List[Dict]:
+        return fetch_news_for_ticker(ticker, max_articles=max_results)
+
+    def fetch_all(self, watchlist: List[str]) -> Dict[str, List[Dict]]:
+        return fetch_news_for_watchlist(watchlist, delay_seconds=self.delay_seconds)
