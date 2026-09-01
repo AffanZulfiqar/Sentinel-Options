@@ -142,8 +142,8 @@ st.markdown(
     """
     <div class="top-banner">
       <div>
-        <h1>📈 News-Sentiment Options Agent</h1>
-        <p>Autonomous • Claude AI • Alpaca Paper Trading • Real-time Risk Gate</p>
+        <h1>📈 Sentinel Options</h1>
+        <p>Autonomous • Gemini AI • Alpaca Paper Trading • Real-time Risk Gate</p>
       </div>
       <div style="margin-left:auto">
         <span class="status-pill"><span class="status-dot"></span> LIVE</span>

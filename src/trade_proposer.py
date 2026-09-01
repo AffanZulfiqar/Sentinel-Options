@@ -28,7 +28,7 @@ from typing import Dict, List, Optional
 from alpaca.trading.client import TradingClient
 from alpaca.data.historical.option import OptionHistoricalDataClient
 from alpaca.data.historical.stock import StockHistoricalDataClient
-from alpaca.data.requests import OptionChainRequest, StockLatestQuoteRequest
+from alpaca.data.requests import OptionLatestQuoteRequest, StockLatestQuoteRequest
 from alpaca.trading.requests import GetOptionContractsRequest
 from alpaca.trading.enums import ContractType
 
@@ -45,8 +45,11 @@ class TradeProposer:
             Config.ALPACA_SECRET_KEY,
             paper=True,
         )
-        # Stock data client for live spot prices (no auth required for latest quotes)
         self._stock_data = StockHistoricalDataClient(
+            Config.ALPACA_API_KEY,
+            Config.ALPACA_SECRET_KEY,
+        )
+        self._option_data = OptionHistoricalDataClient(
             Config.ALPACA_API_KEY,
             Config.ALPACA_SECRET_KEY,
         )
@@ -97,14 +100,18 @@ class TradeProposer:
         if not best:
             return None
 
-        mid   = (float(best.close_price or 0))
-        # Prefer bid/ask midpoint as it is fresher than close
-        bid = float(best.bid_price or 0)
-        ask = float(best.ask_price or 0)
-        if bid > 0 and ask > 0:
-            mid = (bid + ask) / 2
-        elif mid <= 0:
-            mid = bid or ask
+        # Use close_price as starting point; try live quote for fresher bid/ask
+        mid = float(best.close_price or 0)
+        bid, ask = 0.0, 0.0
+        try:
+            quote = self._get_option_quote(best.symbol)
+            if quote:
+                bid = float(quote.bid_price or 0)
+                ask = float(quote.ask_price or 0)
+                if bid > 0 and ask > 0:
+                    mid = (bid + ask) / 2
+        except Exception:
+            pass  # fall back to close_price
 
         if mid <= 0:
             log.warning("Cannot determine price for %s contract.", ticker)
@@ -119,8 +126,8 @@ class TradeProposer:
             "symbol":         best.symbol,
             "expiration":     str(best.expiration_date),
             "strike":         float(best.strike_price or 0),
-            "bid":            float(best.bid_price or 0),
-            "ask":            float(best.ask_price or 0),
+            "bid":            bid,
+            "ask":            ask,
             "mid_price":      mid,
             "contracts":      contracts_qty,
             "estimated_cost": round(mid * 100 * contracts_qty, 2),
@@ -143,6 +150,16 @@ class TradeProposer:
         return proposals
 
     # ── private ──────────────────────────────────────────────────────────────
+
+    def _get_option_quote(self, symbol: str) -> Optional[object]:
+        """Fetch the latest quote for an option symbol."""
+        try:
+            req = OptionLatestQuoteRequest(symbol_or_symbols=symbol)
+            quotes = self._option_data.get_option_latest_quote(req)
+            return quotes.get(symbol)
+        except Exception as exc:
+            log.debug("Could not fetch option quote for %s: %s", symbol, exc)
+            return None
 
     def _get_spot_price(self, ticker: str) -> Optional[float]:
         """Fetch the latest ask price for *ticker* from Alpaca market data."""

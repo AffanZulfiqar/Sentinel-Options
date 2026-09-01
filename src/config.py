@@ -15,9 +15,9 @@ class Config:
     ALPACA_SECRET_KEY: str = os.getenv("ALPACA_SECRET_KEY", "")
     ALPACA_BASE_URL:   str = os.getenv("ALPACA_BASE_URL", "https://paper-api.alpaca.markets")
 
-    # ── Anthropic Claude ────────────────────────────────────────────────────
-    ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
-    CLAUDE_MODEL:      str = "claude-3-5-sonnet-20241022"
+    # ── Google Gemini ─────────────────────────────────────────────────────────
+    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
+    GEMINI_MODEL:   str = "gemini-3.6-flash"
 
     # ── Trading Universe ────────────────────────────────────────────────────
     WATCHLIST: List[str] = os.getenv("WATCHLIST", "AAPL,TSLA,NVDA,MSFT,GOOGL").split(",")
@@ -65,7 +65,7 @@ class Config:
     @classmethod
     def validate(cls) -> bool:
         """Raise ValueError if any required API key is missing."""
-        required = ["ALPACA_API_KEY", "ALPACA_SECRET_KEY", "ANTHROPIC_API_KEY"]
+        required = ["ALPACA_API_KEY", "ALPACA_SECRET_KEY", "GEMINI_API_KEY"]
         missing = [k for k in required if not getattr(cls, k)]
         if missing:
             raise ValueError(f"Missing required env vars: {', '.join(missing)}")

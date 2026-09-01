@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: sentinel-options
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: streamlit run streamlit_app.py --server.port=$PORT --server.address=0.0.0.0 --server.headless=true
+    envVars:
+      - key: ALPACA_API_KEY
+        sync: false
+      - key: ALPACA_SECRET_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: WATCHLIST
+        value: AAPL,TSLA,NVDA,MSFT,GOOGL
+      - key: DRY_RUN
+        value: "false"
+      - key: MAX_LOSS_PER_TRADE
+        value: "2000"
+      - key: MAX_DAILY_LOSS
+        value: "8000"
+      - key: MAX_POSITIONS
+        value: "8"
+      - key: TAKE_PROFIT_PCT
+        value: "0.50"
+      - key: STOP_LOSS_PCT
+        value: "0.40"
+      - key: LOG_LEVEL
+        value: INFO

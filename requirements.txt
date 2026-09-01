@@ -1,5 +1,5 @@
 # Core AI / API
-anthropic>=0.18.0
+google-genai>=1.0.0
 python-dotenv>=1.0.0
 
 # News

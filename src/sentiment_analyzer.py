@@ -1,21 +1,23 @@
 """
-sentiment_analyzer.py – Claude-powered sentiment analysis for news headlines.
+sentiment_analyzer.py – Gemini-powered sentiment analysis for news headlines.
 
-Claude reads a bundle of news articles for each ticker and returns a
-structured JSON assessment:
+Uses the google-genai SDK (google.genai) — the current supported package.
+
+Returns a structured JSON assessment per ticker:
   {
-    "ticker":          str,          # e.g. "AAPL"
-    "sentiment":       str,          # "BULLISH" | "BEARISH" | "NEUTRAL"
+    "ticker":          str,
+    "sentiment":       "BULLISH" | "BEARISH" | "NEUTRAL",
     "confidence":      float,        # 0.0 – 1.0
-    "reasoning":       str,          # one-paragraph explanation
-    "key_headlines":   [str, ...],   # up to 3 most impactful headlines
-    "suggested_trade": str | null    # "CALL" | "PUT" | null
+    "reasoning":       str,
+    "key_headlines":   [str, ...],
+    "suggested_trade": "CALL" | "PUT" | null
   }
 """
 import json
 from typing import Dict, List, Optional
 
-import anthropic
+from google import genai
+from google.genai import types
 
 from .config import Config
 from .logger import get_logger, log_sentiment
@@ -51,30 +53,67 @@ Rules:
 
 class SentimentAnalyzer:
     def __init__(self):
-        self._client = anthropic.Anthropic(api_key=Config.ANTHROPIC_API_KEY)
+        self._client = genai.Client(api_key=Config.GEMINI_API_KEY)
 
     # ── public API ────────────────────────────────────────────────────────────
 
     def analyze(self, ticker: str, articles: List[Dict]) -> Optional[Dict]:
-        """Run sentiment analysis for *ticker* using *articles*.
-
-        Returns the parsed JSON dict or None on failure.
-        """
+        """Run sentiment analysis for *ticker* using *articles*."""
         if not articles:
             log.info("No articles for %s – skipping sentiment.", ticker)
             return None
 
         user_content = self._build_prompt(ticker, articles)
         try:
-            message = self._client.messages.create(
-                model=Config.CLAUDE_MODEL,
-                max_tokens=512,
-                system=_SYSTEM_PROMPT,
-                messages=[{"role": "user", "content": user_content}],
+            response = self._client.models.generate_content(
+                model=Config.GEMINI_MODEL,
+                contents=user_content,
+                config=types.GenerateContentConfig(
+                    system_instruction=_SYSTEM_PROMPT,
+                    temperature=0.2,
+                    max_output_tokens=2048,
+                    safety_settings=[
+                        types.SafetySetting(
+                            category="HARM_CATEGORY_DANGEROUS_CONTENT",
+                            threshold="BLOCK_NONE",
+                        ),
+                        types.SafetySetting(
+                            category="HARM_CATEGORY_HARASSMENT",
+                            threshold="BLOCK_NONE",
+                        ),
+                        types.SafetySetting(
+                            category="HARM_CATEGORY_HATE_SPEECH",
+                            threshold="BLOCK_NONE",
+                        ),
+                        types.SafetySetting(
+                            category="HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                            threshold="BLOCK_NONE",
+                        ),
+                    ],
+                ),
             )
-            raw = message.content[0].text.strip()
+
+            # Guard against empty / blocked responses
+            raw = (response.text or "").strip()
+            if not raw:
+                log.warning(
+                    "Gemini returned empty response for %s (likely safety filter). "
+                    "finish_reason=%s",
+                    ticker,
+                    response.candidates[0].finish_reason if response.candidates else "unknown",
+                )
+                return None
+
+            # Strip markdown fences if Gemini wraps output in ```json ... ```
+            if raw.startswith("```"):
+                parts = raw.split("```")
+                raw = parts[1] if len(parts) > 1 else raw
+                if raw.startswith("json"):
+                    raw = raw[4:]
+                raw = raw.strip()
+
             result = json.loads(raw)
-            result["ticker"] = ticker          # ensure correct ticker always
+            result["ticker"] = ticker
             result["num_articles"] = len(articles)
             log.info(
                 "Sentiment for %s → %s (confidence=%.2f, trade=%s)",
@@ -87,10 +126,10 @@ class SentimentAnalyzer:
             return result
 
         except (json.JSONDecodeError, KeyError) as exc:
-            log.error("Failed to parse Claude response for %s: %s", ticker, exc)
+            log.error("Failed to parse Gemini response for %s: %s", ticker, exc)
             return None
         except Exception as exc:
-            log.error("Claude API error for %s: %s", ticker, exc)
+            log.error("Gemini API error for %s: %s", ticker, exc)
             return None
 
     def analyze_all(self, news_by_ticker: Dict[str, List[Dict]]) -> List[Dict]:
