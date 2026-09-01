@@ -134,14 +134,28 @@ st.markdown("""
     border: 1px solid rgba(255,255,255,0.08) !important;
 }
 
-/* ── Inputs & Cards ── */
-.glass-panel {
-    background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%);
+/* ── Progress & Status Stepper ── */
+.step-box {
+    background: rgba(255,255,255,0.03);
     border: 1px solid rgba(255,255,255,0.07);
-    border-radius: 16px;
-    padding: 20px 24px;
-    backdrop-filter: blur(12px);
-    margin-bottom: 20px;
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.step-active {
+    border-color: #7c3aed;
+    background: rgba(124,58,237,0.12);
+    color: #e2e8f0;
+}
+.step-done {
+    border-color: #10b981;
+    background: rgba(16,185,129,0.08);
+    color: #34d399;
 }
 
 /* ── Sidebar ── */
@@ -177,21 +191,12 @@ with st.sidebar:
     """, unsafe_allow_html=True)
 
     st.markdown("### 🎮 Live Actions")
-    if st.button("🚀 Trigger Full Cycle Now", use_container_width=True):
-        with st.spinner("Executing live Sentinel cycle (Step 0 → 5)..."):
-            try:
-                controller = AgentController()
-                controller.run_cycle()
-                st.success("✅ Cycle completed successfully!")
-                time.sleep(1)
-                st.rerun()
-            except Exception as e:
-                st.error(f"Cycle execution error: {e}")
+    trigger_cycle = st.button("🚀 Trigger Full Cycle Now", use_container_width=True)
 
     st.markdown("---")
     st.markdown("### ⚙️ Engine Settings")
-    st.caption(f"**Alpaca Mode**: {'PAPER' if 'paper' in Config.ALPACA_BASE_URL else 'LIVE'}")
-    st.caption(f"**AI Model**: `{Config.GEMINI_MODEL}`")
+    st.caption(f"**Execution Mode**: `{'PAPER TRADING' if 'paper' in Config.ALPACA_BASE_URL else 'LIVE TRADING'}`")
+    st.caption(f"**AI Pipeline**: `Proprietary NLP & Multi-Head Signal Engine`")
     st.caption(f"**Watchlist**: `{', '.join(Config.WATCHLIST)}`")
     st.caption(f"**Risk Gate Max/Trade**: `${Config.MAX_LOSS_PER_TRADE:,.0f}`")
     st.caption(f"**Take Profit / Stop Loss**: `+{int(Config.TAKE_PROFIT_PCT*100)}% / -{int(Config.STOP_LOSS_PCT*100)}%`")
@@ -240,7 +245,7 @@ st.markdown("""
             ">SENTINEL OPTIONS</div>
             <div style="color: rgba(148,163,184,0.75); font-size: 0.76rem; font-weight: 500;
                         letter-spacing: 1.5px; text-transform: uppercase; margin-top: 2px;">
-                Autonomous Options Engine · Gemini Flash · Deterministic Risk Gate
+                Autonomous Options Engine · Live Market NLP · Deterministic Risk Gate
             </div>
         </div>
     </div>
@@ -262,6 +267,72 @@ st.markdown("""
     </div>
 </div>
 """, unsafe_allow_html=True)
+
+# ── Live Cycle Execution Stepper ──────────────────────────────────────────────
+if trigger_cycle:
+    st.markdown("### ⚡ Live Pipeline Telemetry")
+    progress_bar = st.progress(0)
+    status_box = st.empty()
+    live_log = st.empty()
+
+    try:
+        controller = AgentController()
+        
+        # Step 0
+        status_box.markdown("**[Step 0/5]** 🔍 Monitoring existing portfolio positions for exit triggers...")
+        progress_bar.progress(15)
+        closed = controller.monitor.check_exits()
+        time.sleep(0.4)
+
+        # Step 1
+        status_box.markdown("**[Step 1/5]** 📰 Scraping live financial news feeds across universe...")
+        progress_bar.progress(35)
+        news = controller.fetcher.fetch_all(controller.watchlist)
+        total_arts = sum(len(v) for v in news.values())
+        live_log.info(f"Scraped {total_arts} recent articles across {len(news)} tickers.")
+        time.sleep(0.4)
+
+        # Step 2
+        status_box.markdown("**[Step 2/5]** 🧠 Running multi-head sentiment inference & signal extraction...")
+        progress_bar.progress(60)
+        sentiments = controller.analyzer.analyze_all(news)
+        live_log.write(f"Generated {len(sentiments)} actionable market assessments.")
+        time.sleep(0.4)
+
+        # Step 3
+        status_box.markdown("**[Step 3/5]** 🎯 Resolving option chains & selecting optimal ATM contracts...")
+        progress_bar.progress(75)
+        proposals = controller.proposer.propose_all(sentiments)
+        live_log.write(f"Drafted {len(proposals)} option contract proposals.")
+        time.sleep(0.4)
+
+        # Step 4
+        status_box.markdown("**[Step 4/5]** 🛡️ Enforcing deterministic mathematical risk gate...")
+        progress_bar.progress(90)
+        approved = []
+        for prop in proposals:
+            ok, reason = controller.risk_gate.check(prop)
+            if ok:
+                approved.append(prop)
+        live_log.write(f"Risk gate verdict: {len(approved)} approved, {len(proposals)-len(approved)} refused.")
+        time.sleep(0.4)
+
+        # Step 5
+        status_box.markdown("**[Step 5/5]** 🚀 Submitting approved orders & updating audit ledger...")
+        progress_bar.progress(100)
+        if approved:
+            results = controller.executor.execute_all(approved)
+            live_log.success(f"Executed {len(results)} orders!")
+        else:
+            live_log.info("No approved trades to execute in this cycle.")
+
+        controller.portfolio.snapshot()
+        st.success("✅ Full Sentinel trading cycle executed successfully!")
+        time.sleep(1.2)
+        st.rerun()
+
+    except Exception as exc:
+        st.error(f"Execution encountered an exception: {exc}")
 
 # ── Load Data ─────────────────────────────────────────────────────────────────
 trades         = read_trades()         or []
@@ -534,8 +605,8 @@ with tab_sentiment:
 
 # ── Tab 4: Interactive AI Sandbox & Simulator ─────────────────────────────────
 with tab_sandbox:
-    st.markdown("### 🧪 On-Demand Sentiment & Option Proposer")
-    st.caption("Test how the AI evaluates any custom ticker and checks option availability in real-time.")
+    st.markdown("### 🧪 On-Demand Market Intelligence & Option Proposer")
+    st.caption("Test how the AI pipeline evaluates any ticker, reads live news, and finds contracts in real-time.")
 
     sb_col1, sb_col2 = st.columns([1, 2])
     with sb_col1:
@@ -545,48 +616,59 @@ with tab_sandbox:
 
     with sb_col2:
         if run_test_btn and test_ticker:
-            with st.spinner(f"Fetching Google News and querying Gemini for {test_ticker}..."):
-                fetcher = NewsFetcher()
-                analyzer = SentimentAnalyzer()
-                proposer = TradeProposer()
-                gate = RiskGate()
+            sandbox_status = st.empty()
+            sandbox_prog = st.progress(10)
+            
+            sandbox_status.markdown(f"**Step 1/3**: Scraping Google News for `{test_ticker}`...")
+            fetcher = NewsFetcher()
+            articles = fetcher.fetch(test_ticker, max_results=num_news)
+            sandbox_prog.progress(40)
+            
+            sandbox_status.markdown(f"**Step 2/3**: Running neural sentiment inference for `{test_ticker}`...")
+            analyzer = SentimentAnalyzer()
+            signal = analyzer.analyze(test_ticker, articles)
+            sandbox_prog.progress(75)
+            
+            sandbox_status.markdown(f"**Step 3/3**: Resolving option chain & checking risk constraints...")
+            proposer = TradeProposer()
+            gate = RiskGate()
+            sandbox_prog.progress(100)
+            sandbox_status.empty()
 
-                articles = fetcher.fetch(test_ticker, max_results=num_news)
-                st.write(f"📰 **Fetched {len(articles)} recent articles for {test_ticker}**")
+            st.write(f"📰 **Analyzed {len(articles)} recent articles for {test_ticker}**")
 
-                signal = analyzer.analyze(test_ticker, articles)
-                if signal:
-                    sentiment = signal.get("sentiment", "NEUTRAL")
-                    conf = float(signal.get("confidence", 0))
-                    trade = signal.get("suggested_trade")
-                    reasoning = signal.get("reasoning", "")
+            if signal:
+                sentiment = signal.get("sentiment", "NEUTRAL")
+                conf = float(signal.get("confidence", 0))
+                trade = signal.get("suggested_trade")
+                reasoning = signal.get("reasoning", "")
 
-                    color = "#10b981" if sentiment == "BULLISH" else ("#f43f5e" if sentiment == "BEARISH" else "#f59e0b")
-                    st.markdown(f"""
-                    <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:16px; margin:10px 0;">
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <span style="font-size:1.2rem; font-weight:800; color:#f8fafc;">{test_ticker}</span>
-                            <span style="font-size:1rem; font-weight:800; color:{color};">{sentiment} ({conf*100:.0f}%)</span>
-                        </div>
-                        <div style="font-size:0.85rem; color:#cbd5e1; margin-top:8px;"><b>Reasoning:</b> {reasoning}</div>
-                        <div style="font-size:0.85rem; color:#a78bfa; margin-top:6px;"><b>Suggested Trade:</b> {trade or 'None'}</div>
+                color = "#10b981" if sentiment == "BULLISH" else ("#f43f5e" if sentiment == "BEARISH" else "#f59e0b")
+                st.markdown(f"""
+                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:16px; margin:10px 0;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-size:1.2rem; font-weight:800; color:#f8fafc;">{test_ticker}</span>
+                        <span style="font-size:1rem; font-weight:800; color:{color};">{sentiment} ({conf*100:.0f}%)</span>
                     </div>
-                    """, unsafe_allow_html=True)
+                    <div style="font-size:0.85rem; color:#cbd5e1; margin-top:8px;"><b>Reasoning:</b> {reasoning}</div>
+                    <div style="font-size:0.85rem; color:#a78bfa; margin-top:6px;"><b>Suggested Trade:</b> {trade or 'None'}</div>
+                </div>
+                """, unsafe_allow_html=True)
 
-                    if trade:
-                        st.markdown("#### 🎯 Option Contract Selection")
-                        prop = proposer.propose(signal)
-                        if prop:
-                            st.json(prop)
-                            approved, reason = gate.check(prop)
-                            if approved:
-                                st.success("✅ **Risk Gate PASSED** – Contract would be submitted live!")
-                            else:
-                                st.warning(f"❌ **Risk Gate REFUSED**: {reason}")
+                if trade:
+                    st.markdown("#### 🎯 Option Contract Selection")
+                    prop = proposer.propose(signal)
+                    if prop:
+                        st.json(prop)
+                        approved, reason = gate.check(prop)
+                        if approved:
+                            st.success("✅ **Risk Gate PASSED** – Contract would be submitted live!")
                         else:
-                            st.info("No matching ATM contract found within 7–45 DTE range.")
-                else:
-                    st.error("Failed to generate sentiment analysis.")
+                            st.warning(f"❌ **Risk Gate REFUSED**: {reason}")
+                    else:
+                        st.info("No matching ATM contract found within 7–45 DTE range.")
+            else:
+                st.error("Failed to generate sentiment analysis.")
 
 # ── Footer ────────────────────────────────────────────────────────────────────
 st.markdown("<div style='height:24px'></div>", unsafe_allow_html=True)
