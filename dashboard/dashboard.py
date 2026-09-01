@@ -1,335 +1,610 @@
 """
-dashboard.py – Real-time Streamlit trading dashboard.
-
-Run with:
-    streamlit run dashboard/dashboard.py
-
-Features:
-  • Live account equity & P&L card
-  • Portfolio value chart (line)
-  • Executed trades table
-  • REFUSED trades table (prominently displayed)
-  • Sentiment log
-  • Auto-refresh every 60 s
+dashboard.py – Sentinel Options • Interactive Mission Control & Trading Dashboard
 """
-import sys
-import os
+import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+import time
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
 import streamlit as st
 
+from src.config import Config
 from src.logger import (
-    read_trades,
-    read_refused_trades,
-    read_sentiment_log,
-    read_portfolio_history,
+    read_trades, read_refused_trades,
+    read_sentiment_log, read_portfolio_history,
 )
+from src.news_fetcher import NewsFetcher
+from src.sentiment_analyzer import SentimentAnalyzer
+from src.trade_proposer import TradeProposer
+from src.risk_gate import RiskGate
+from src.position_monitor import PositionMonitor
+from src.agent_controller import AgentController
 
 # ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
-    page_title="News-Sentiment Options Agent",
-    page_icon="📈",
+    page_title="Sentinel Options • Command Center",
+    page_icon="⚡",
     layout="wide",
-    initial_sidebar_state="collapsed",
+    initial_sidebar_state="expanded",
 )
 
-# ── Custom CSS ────────────────────────────────────────────────────────────────
-st.markdown(
-    """
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+# ── Global CSS ────────────────────────────────────────────────────────────────
+st.markdown("""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
-    html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
+*, html, body, [class*="css"] {
+    font-family: 'Inter', sans-serif !important;
+}
 
-    /* Dark gradient background */
-    .stApp { background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%); }
+/* ── Base Theme ── */
+.stApp {
+    background: radial-gradient(ellipse at top left, #0e0d26 0%, #050510 45%, #08081a 100%);
+    min-height: 100vh;
+}
 
-    /* Metric cards */
-    [data-testid="metric-container"] {
-        background: linear-gradient(145deg, #1c2333, #21262d);
-        border: 1px solid #30363d;
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-    }
-    [data-testid="metric-container"] label { color: #8b949e !important; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; }
-    [data-testid="metric-container"] [data-testid="stMetricValue"] { color: #e6edf3 !important; font-weight: 700; }
+/* ── Hide default chrome ── */
+#MainMenu, footer, header { visibility: hidden; }
+.block-container { padding: 1.5rem 2rem 2.5rem; max-width: 100%; }
 
-    /* Section headers */
-    .section-header {
-        color: #58a6ff;
-        font-size: 1.1rem;
-        font-weight: 600;
-        letter-spacing: 0.5px;
-        padding: 8px 0 4px;
-        border-bottom: 1px solid #21262d;
-        margin-bottom: 12px;
-    }
+/* ── Metric cards ── */
+[data-testid="metric-container"] {
+    background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 18px 22px;
+    backdrop-filter: blur(14px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.08);
+    transition: transform 0.2s ease, border-color 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+[data-testid="metric-container"]:hover {
+    transform: translateY(-2px);
+    border-color: rgba(124,58,237,0.4);
+}
+[data-testid="metric-container"]::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #7c3aed, #06b6d4, #10b981);
+    opacity: 0.9;
+}
+[data-testid="metric-container"] label {
+    color: rgba(148,163,184,0.85) !important;
+    font-size: 0.72rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1.2px !important;
+    font-weight: 600 !important;
+}
+[data-testid="stMetricValue"] {
+    color: #f8fafc !important;
+    font-size: 1.85rem !important;
+    font-weight: 800 !important;
+    line-height: 1.1 !important;
+}
+[data-testid="stMetricDelta"] { font-size: 0.8rem !important; font-weight: 600 !important; }
 
-    /* REFUSED badge */
-    .refused-badge {
-        background: linear-gradient(135deg, #da3633 0%, #b91c1c 100%);
-        color: white;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        letter-spacing: 1px;
-        display: inline-block;
-        margin-bottom: 8px;
-    }
+/* ── Interactive Buttons ── */
+.stButton > button {
+    background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255,255,255,0.15) !important;
+    border-radius: 12px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.3px !important;
+    padding: 0.55rem 1.4rem !important;
+    box-shadow: 0 4px 20px rgba(124,58,237,0.35) !important;
+    transition: all 0.2s ease !important;
+}
+.stButton > button:hover {
+    box-shadow: 0 6px 28px rgba(124,58,237,0.6) !important;
+    transform: translateY(-1px) !important;
+}
 
-    /* APPROVED badge */
-    .approved-badge {
-        background: linear-gradient(135deg, #238636 0%, #16a34a 100%);
-        color: white;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        letter-spacing: 1px;
-        display: inline-block;
-        margin-bottom: 8px;
-    }
+/* ── Tabs ── */
+.stTabs [data-baseweb="tab-list"] {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    padding: 5px;
+    gap: 6px;
+}
+.stTabs [data-baseweb="tab"] {
+    color: rgba(148,163,184,0.7);
+    border-radius: 8px;
+    font-size: 0.86rem;
+    font-weight: 600;
+    padding: 8px 20px;
+    border: none;
+}
+.stTabs [aria-selected="true"] {
+    background: linear-gradient(135deg, rgba(124,58,237,0.35), rgba(6,182,212,0.25)) !important;
+    color: #f8fafc !important;
+    border: 1px solid rgba(124,58,237,0.5) !important;
+}
 
-    /* Dataframe styling */
-    .stDataFrame { border-radius: 8px; overflow: hidden; }
+/* ── DataFrames ── */
+.stDataFrame {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.08) !important;
+}
 
-    /* Tabs */
-    .stTabs [data-baseweb="tab-list"] { background: #161b22; border-radius: 8px; padding: 4px; }
-    .stTabs [data-baseweb="tab"] { color: #8b949e; border-radius: 6px; }
-    .stTabs [aria-selected="true"] { background: #21262d !important; color: #58a6ff !important; }
+/* ── Inputs & Cards ── */
+.glass-panel {
+    background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 16px;
+    padding: 20px 24px;
+    backdrop-filter: blur(12px);
+    margin-bottom: 20px;
+}
 
-    /* Top banner */
-    .top-banner {
-        background: linear-gradient(90deg, #0d419d 0%, #1f6feb 50%, #388bfd 100%);
-        border-radius: 12px;
-        padding: 20px 28px;
-        margin-bottom: 24px;
-        display: flex;
-        align-items: center;
-        gap: 16px;
-    }
-    .top-banner h1 { color: white; margin: 0; font-size: 1.6rem; font-weight: 700; }
-    .top-banner p  { color: rgba(255,255,255,0.8); margin: 0; font-size: 0.85rem; }
+/* ── Sidebar ── */
+[data-testid="stSidebar"] {
+    background: rgba(8,8,22,0.95) !important;
+    border-right: 1px solid rgba(255,255,255,0.08);
+}
 
-    /* Status pill */
-    .status-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        background: rgba(35,134,54,0.2);
-        border: 1px solid #238636;
-        border-radius: 20px;
-        padding: 4px 14px;
-        color: #3fb950;
-        font-size: 0.8rem;
-        font-weight: 500;
-    }
-    .status-dot { width: 8px; height: 8px; background: #3fb950; border-radius: 50%; display: inline-block; animation: pulse 2s infinite; }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+/* ── Animations ── */
+@keyframes pulse-ring {
+    0%   { transform: scale(1);   opacity: 1; }
+    70%  { transform: scale(1.6); opacity: 0; }
+    100% { transform: scale(1);   opacity: 0; }
+}
+@keyframes glow {
+    0%, 100% { box-shadow: 0 0 20px rgba(124,58,237,0.3); }
+    50%       { box-shadow: 0 0 35px rgba(124,58,237,0.6), 0 0 60px rgba(6,182,212,0.2); }
+}
+@keyframes ticker-scroll {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+</style>
+""", unsafe_allow_html=True)
 
-
-# ── Header ────────────────────────────────────────────────────────────────────
-st.markdown(
-    """
-    <div class="top-banner">
-      <div>
-        <h1>📈 Sentinel Options</h1>
-        <p>Autonomous • Gemini AI • Alpaca Paper Trading • Real-time Risk Gate</p>
-      </div>
-      <div style="margin-left:auto">
-        <span class="status-pill"><span class="status-dot"></span> LIVE</span>
-      </div>
+# ── Sidebar Controls ──────────────────────────────────────────────────────────
+with st.sidebar:
+    st.markdown("""
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+        <div style="font-size:1.6rem;">⚡</div>
+        <div style="font-size:1.1rem; font-weight:800; color:#f8fafc; letter-spacing:0.5px;">MISSION CONTROL</div>
     </div>
-    """,
-    unsafe_allow_html=True,
+    """, unsafe_allow_html=True)
+
+    st.markdown("### 🎮 Live Actions")
+    if st.button("🚀 Trigger Full Cycle Now", use_container_width=True):
+        with st.spinner("Executing live Sentinel cycle (Step 0 → 5)..."):
+            try:
+                controller = AgentController()
+                controller.run_cycle()
+                st.success("✅ Cycle completed successfully!")
+                time.sleep(1)
+                st.rerun()
+            except Exception as e:
+                st.error(f"Cycle execution error: {e}")
+
+    st.markdown("---")
+    st.markdown("### ⚙️ Engine Settings")
+    st.caption(f"**Alpaca Mode**: {'PAPER' if 'paper' in Config.ALPACA_BASE_URL else 'LIVE'}")
+    st.caption(f"**AI Model**: `{Config.GEMINI_MODEL}`")
+    st.caption(f"**Watchlist**: `{', '.join(Config.WATCHLIST)}`")
+    st.caption(f"**Risk Gate Max/Trade**: `${Config.MAX_LOSS_PER_TRADE:,.0f}`")
+    st.caption(f"**Take Profit / Stop Loss**: `+{int(Config.TAKE_PROFIT_PCT*100)}% / -{int(Config.STOP_LOSS_PCT*100)}%`")
+
+    st.markdown("---")
+    auto_refresh = st.checkbox("Auto-refresh UI (60s)", value=True)
+    if st.button("🔄 Refresh Data", use_container_width=True):
+        st.rerun()
+
+# ── Header Banner ─────────────────────────────────────────────────────────────
+st.markdown("""
+<div style="
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 24px;
+    margin-bottom: 12px;
+    background: linear-gradient(135deg, rgba(124,58,237,0.14) 0%, rgba(6,182,212,0.07) 100%);
+    border: 1px solid rgba(124,58,237,0.22);
+    border-radius: 18px;
+    position: relative;
+    overflow: hidden;
+">
+    <div style="position:absolute; top:0; left:0; right:0; height:1px;
+                background: linear-gradient(90deg, transparent, #7c3aed, #06b6d4, transparent);"></div>
+    <div style="display:flex; align-items:center; gap:16px;">
+        <div style="
+            width: 48px; height: 48px;
+            background: linear-gradient(135deg, #7c3aed, #06b6d4);
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 0 25px rgba(124,58,237,0.5);
+            animation: glow 3s ease-in-out infinite;
+        ">⚡</div>
+        <div>
+            <div style="
+                font-size: 1.7rem;
+                font-weight: 900;
+                background: linear-gradient(135deg, #f8fafc 0%, #a78bfa 50%, #38bdf8 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                letter-spacing: -0.5px;
+                line-height: 1.1;
+            ">SENTINEL OPTIONS</div>
+            <div style="color: rgba(148,163,184,0.75); font-size: 0.76rem; font-weight: 500;
+                        letter-spacing: 1.5px; text-transform: uppercase; margin-top: 2px;">
+                Autonomous Options Engine · Gemini Flash · Deterministic Risk Gate
+            </div>
+        </div>
+    </div>
+    <div style="display:flex; align-items:center; gap:12px;">
+        <div style="
+            display: flex; align-items: center; gap: 8px;
+            background: rgba(16,185,129,0.12);
+            border: 1px solid rgba(16,185,129,0.35);
+            border-radius: 30px;
+            padding: 6px 16px;
+        ">
+            <div style="position:relative; width:9px; height:9px;">
+                <div style="position:absolute; inset:0; background:#10b981; border-radius:50%;
+                            animation: pulse-ring 2s ease-out infinite;"></div>
+                <div style="width:9px; height:9px; background:#10b981; border-radius:50%;"></div>
+            </div>
+            <span style="color:#10b981; font-size:0.8rem; font-weight:700; letter-spacing:1px;">ACTIVE</span>
+        </div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+# ── Load Data ─────────────────────────────────────────────────────────────────
+trades         = read_trades()         or []
+refused_trades = read_refused_trades() or []
+sentiment_log  = read_sentiment_log()  or []
+portfolio_hist = read_portfolio_history() or []
+
+df_trades  = pd.DataFrame(trades)
+df_refused = pd.DataFrame(refused_trades)
+df_sent    = pd.DataFrame(sentiment_log)
+df_port    = pd.DataFrame(portfolio_hist)
+
+# ── Compute Key Metrics ───────────────────────────────────────────────────────
+START_EQUITY   = 100_000
+cur_equity     = float(df_port["equity"].iloc[-1])        if not df_port.empty and "equity"         in df_port else START_EQUITY
+open_positions = int(df_port["open_positions"].iloc[-1])  if not df_port.empty and "open_positions" in df_port else 0
+total_pnl      = cur_equity - START_EQUITY
+pnl_pct        = (total_pnl / START_EQUITY) * 100
+
+# ── Top Metric Cards ──────────────────────────────────────────────────────────
+c1, c2, c3, c4, c5 = st.columns(5)
+c1.metric("💼 Account Equity", f"${cur_equity:,.0f}")
+c2.metric("📈 Net P&L",        f"${total_pnl:+,.0f}",   f"{pnl_pct:+.2f}%")
+c3.metric("✅ Executed Orders", len(trades))
+c4.metric("🚫 Gate Refusals",   len(refused_trades), help="Proposals blocked by deterministic rules")
+c5.metric("📋 Open Positions",  open_positions)
+
+st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
+
+# ── Live Sentiment Ticker Bar ─────────────────────────────────────────────────
+if not df_sent.empty and "ticker" in df_sent and "sentiment" in df_sent:
+    latest = df_sent.drop_duplicates("ticker", keep="last").to_dict("records")
+    def sent_color(s):
+        return {"BULLISH":"#10b981","BEARISH":"#f43f5e","NEUTRAL":"#f59e0b"}.get(s,"#94a3b8")
+    def sent_icon(s):
+        return {"BULLISH":"▲","BEARISH":"▼","NEUTRAL":"◆"}.get(s,"·")
+
+    items = "".join([
+        f'<span style="margin:0 24px; color:rgba(148,163,184,0.4)">|</span>'
+        f'<span style="color:#cbd5e1; font-weight:700; font-size:0.88rem;">{r["ticker"]}</span>'
+        f'<span style="color:{sent_color(r["sentiment"])}; margin-left:6px; font-weight:700; font-size:0.88rem;">'
+        f'{sent_icon(r["sentiment"])} {r["sentiment"]}</span>'
+        f'<span style="color:{sent_color(r["sentiment"])}; margin-left:5px; font-size:0.75rem; opacity:0.85;">'
+        f'{float(r.get("confidence",0))*100:.0f}%</span>'
+        for r in latest
+    ] * 3)
+
+    st.markdown(f"""
+    <div style="
+        background: rgba(255,255,255,0.02);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 12px;
+        padding: 9px 0;
+        overflow: hidden;
+        margin-bottom: 18px;
+        white-space: nowrap;
+    ">
+        <div style="
+            display: inline-block;
+            animation: ticker-scroll 24s linear infinite;
+            padding: 0 20px;
+            font-family: 'JetBrains Mono', monospace;
+        ">{items}</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+# ── Primary Visualizations Row ────────────────────────────────────────────────
+col_chart, col_donut = st.columns([3, 1])
+
+with col_chart:
+    st.markdown("""
+    <div style="color:#94a3b8; font-size:0.72rem; text-transform:uppercase;
+                letter-spacing:1.8px; font-weight:600; margin-bottom:8px;">
+        ◈ Portfolio Equity Curve
+    </div>""", unsafe_allow_html=True)
+
+    if not df_port.empty and "equity" in df_port and "timestamp" in df_port:
+        df_port["timestamp"] = pd.to_datetime(df_port["timestamp"])
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=df_port["timestamp"], y=df_port["equity"],
+            fill="tozeroy",
+            fillcolor="rgba(124,58,237,0.08)",
+            line=dict(color="rgba(0,0,0,0)", width=0),
+            showlegend=False, hoverinfo="skip",
+        ))
+        fig.add_trace(go.Scatter(
+            x=df_port["timestamp"], y=df_port["equity"],
+            mode="lines+markers",
+            line=dict(color="#8b5cf6", width=2.5, shape="spline"),
+            marker=dict(size=5, color="#06b6d4", line=dict(color="#0f0c29", width=2)),
+            name="Equity",
+            hovertemplate="<b>$%{y:,.2f}</b><br>%{x}<extra></extra>",
+        ))
+        fig.add_hline(
+            y=START_EQUITY,
+            line=dict(color="rgba(148,163,184,0.25)", dash="dot", width=1),
+            annotation_text="Base $100K",
+            annotation_font=dict(color="rgba(148,163,184,0.5)", size=10),
+        )
+        fig.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            font=dict(color="#94a3b8", family="Inter"),
+            xaxis=dict(gridcolor="rgba(255,255,255,0.04)", showgrid=True, zeroline=False),
+            yaxis=dict(gridcolor="rgba(255,255,255,0.04)", showgrid=True, zeroline=False, tickprefix="$"),
+            height=250, margin=dict(l=0, r=0, t=8, b=0),
+            showlegend=False,
+            hovermode="x unified",
+        )
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.info("No equity curve yet — click 'Trigger Full Cycle Now' in the sidebar to populate.")
+
+with col_donut:
+    st.markdown("""
+    <div style="color:#94a3b8; font-size:0.72rem; text-transform:uppercase;
+                letter-spacing:1.8px; font-weight:600; margin-bottom:8px;">
+        ◈ Signal Distribution
+    </div>""", unsafe_allow_html=True)
+
+    if not df_sent.empty and "sentiment" in df_sent:
+        counts = df_sent["sentiment"].value_counts()
+        colors = {"BULLISH":"#10b981","BEARISH":"#f43f5e","NEUTRAL":"#f59e0b"}
+        fig2 = go.Figure(go.Pie(
+            labels=counts.index,
+            values=counts.values,
+            hole=0.66,
+            marker_colors=[colors.get(l,"#94a3b8") for l in counts.index],
+            textfont=dict(size=11, color="white"),
+            hovertemplate="<b>%{label}</b>: %{value} signals<extra></extra>",
+        ))
+        fig2.add_annotation(
+            text=f"<b>{len(df_sent)}</b><br><span style='font-size:10px; color:#94a3b8'>TOTAL</span>",
+            x=0.5, y=0.5, showarrow=False,
+            font=dict(size=15, color="#f8fafc"),
+        )
+        fig2.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)",
+            font=dict(color="#94a3b8", family="Inter"),
+            height=250, margin=dict(l=0, r=0, t=8, b=0),
+            showlegend=True,
+            legend=dict(
+                font=dict(size=10, color="#94a3b8"),
+                bgcolor="rgba(0,0,0,0)",
+                orientation="h", x=0.5, xanchor="center", y=-0.15,
+            ),
+        )
+        st.plotly_chart(fig2, use_container_width=True)
+    else:
+        st.markdown("<div style='color:#64748b; font-size:0.85rem; padding:40px 0;'>No sentiment records yet.</div>", unsafe_allow_html=True)
+
+st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+
+# ── Main Tabs: Data & Interactive Tools ───────────────────────────────────────
+tab_exec, tab_refused, tab_sentiment, tab_sandbox = st.tabs([
+    "⚡ Executed Trades",
+    "🚫 Risk Gate Audit",
+    "🧠 Sentiment Intelligence",
+    "🧪 Interactive AI Sandbox & Simulator",
+])
+
+CHART_LAYOUT = dict(
+    paper_bgcolor="rgba(0,0,0,0)",
+    plot_bgcolor="rgba(0,0,0,0)",
+    font=dict(color="#94a3b8", family="Inter"),
+    height=240,
+    margin=dict(l=0, r=0, t=24, b=0),
+    legend=dict(bgcolor="rgba(0,0,0,0)"),
+    xaxis=dict(gridcolor="rgba(255,255,255,0.04)"),
+    yaxis=dict(gridcolor="rgba(255,255,255,0.04)"),
 )
 
-# ── Auto-refresh ──────────────────────────────────────────────────────────────
-refresh_interval = st.sidebar.slider("Auto-refresh (seconds)", 10, 300, 60)
-st.sidebar.markdown("---")
-st.sidebar.markdown("**Hackathon**: Alpaca × lablab.ai 2026")
-st.sidebar.markdown("**Strategy**: News-Sentiment → Options")
-
-# ── Load data ─────────────────────────────────────────────────────────────────
-trades         = read_trades()
-refused_trades = read_refused_trades()
-sentiment_log  = read_sentiment_log()
-portfolio_hist = read_portfolio_history()
-
-df_trades   = pd.DataFrame(trades)         if trades         else pd.DataFrame()
-df_refused  = pd.DataFrame(refused_trades) if refused_trades else pd.DataFrame()
-df_sent     = pd.DataFrame(sentiment_log)  if sentiment_log  else pd.DataFrame()
-df_port     = pd.DataFrame(portfolio_hist) if portfolio_hist  else pd.DataFrame()
-
-# ── Metrics row ───────────────────────────────────────────────────────────────
-col1, col2, col3, col4, col5 = st.columns(5)
-
-current_equity = df_port["equity"].iloc[-1]         if not df_port.empty and "equity" in df_port else 100_000
-initial_equity = df_port["equity"].iloc[0]          if not df_port.empty and "equity" in df_port else 100_000
-total_pnl      = current_equity - initial_equity
-open_positions = int(df_port["open_positions"].iloc[-1]) if not df_port.empty and "open_positions" in df_port else 0
-
-col1.metric("💰 Portfolio Value",   f"${current_equity:,.2f}")
-col2.metric("📊 Total P&L",         f"${total_pnl:+,.2f}",  f"{(total_pnl/initial_equity*100):+.2f}%")
-col3.metric("✅ Executed Trades",   len(trades))
-col4.metric("❌ Refused Trades",    len(refused_trades), help="Risk-gate rejections")
-col5.metric("📋 Open Positions",    open_positions)
-
-st.markdown("---")
-
-# ── Portfolio Chart ───────────────────────────────────────────────────────────
-st.markdown('<div class="section-header">📈 Portfolio Equity Over Time</div>', unsafe_allow_html=True)
-
-if not df_port.empty and "equity" in df_port and "timestamp" in df_port:
-    df_port["timestamp"] = pd.to_datetime(df_port["timestamp"])
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(
-        x=df_port["timestamp"],
-        y=df_port["equity"],
-        mode="lines+markers",
-        name="Equity",
-        line=dict(color="#58a6ff", width=2.5),
-        marker=dict(size=4),
-        fill="tozeroy",
-        fillcolor="rgba(88,166,255,0.07)",
-    ))
-    fig.add_hline(y=100_000, line_dash="dot", line_color="#3fb950", annotation_text="Start $100K")
-    fig.update_layout(
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(22,27,34,0.7)",
-        font=dict(color="#8b949e", family="Inter"),
-        xaxis=dict(gridcolor="#21262d", showgrid=True),
-        yaxis=dict(gridcolor="#21262d", showgrid=True, tickprefix="$"),
-        height=300,
-        margin=dict(l=0, r=0, t=10, b=0),
-        showlegend=False,
-    )
-    st.plotly_chart(fig, use_container_width=True)
-else:
-    st.info("No portfolio history yet – run the agent to populate data.")
-
-# ── Tabs for tables ───────────────────────────────────────────────────────────
-tab1, tab2, tab3 = st.tabs(["✅ Executed Trades", "❌ Refused Trades", "🧠 Sentiment Log"])
-
-# ── Executed Trades ───────────────────────────────────────────────────────────
-with tab1:
-    st.markdown('<span class="approved-badge">EXECUTED</span>', unsafe_allow_html=True)
+# ── Tab 1: Executed Trades ────────────────────────────────────────────────────
+with tab_exec:
     if df_trades.empty:
-        st.info("No trades executed yet.")
+        st.markdown("""
+        <div style="padding:40px; text-align:center; color:rgba(148,163,184,0.5);">
+            <div style="font-size:2.2rem; margin-bottom:10px;">📭</div>
+            <div style="font-weight:600; font-size:1rem; color:#cbd5e1;">No orders placed yet</div>
+            <div style="font-size:0.8rem; margin-top:4px;">Orders execute during live market hours when high-confidence signals fire.</div>
+        </div>""", unsafe_allow_html=True)
     else:
-        cols_to_show = [c for c in ["timestamp","ticker","option_type","symbol","strike","contracts","mid_price","estimated_cost","status"] if c in df_trades.columns]
-        display = df_trades[cols_to_show].sort_values("timestamp", ascending=False) if "timestamp" in df_trades.columns else df_trades[cols_to_show]
-        st.dataframe(
-            display.rename(columns={
-                "timestamp": "Time (UTC)", "option_type": "Type",
-                "mid_price": "Fill Price", "estimated_cost": "Cost ($)",
-            }),
-            use_container_width=True,
-            hide_index=True,
-        )
+        cols = [c for c in ["timestamp","ticker","option_type","symbol","strike",
+                             "contracts","mid_price","estimated_cost","status"] if c in df_trades]
+        disp = df_trades[cols].sort_values("timestamp", ascending=False) if "timestamp" in df_trades else df_trades[cols]
+        disp = disp.rename(columns={
+            "timestamp":"Time","option_type":"Type",
+            "mid_price":"Fill $","estimated_cost":"Cost $",
+        })
 
-# ── Refused Trades ────────────────────────────────────────────────────────────
-with tab2:
-    st.markdown('<span class="refused-badge">🚫 REFUSED BY RISK GATE</span>', unsafe_allow_html=True)
-    st.caption("These are proposals that Claude generated but our deterministic risk gate blocked.")
+        def color_type(v):
+            if str(v).lower() == "call": return "color:#10b981; font-weight:700"
+            if str(v).lower() == "put":  return "color:#f43f5e; font-weight:700"
+            return ""
+
+        st.dataframe(disp.style.map(color_type, subset=["Type"] if "Type" in disp else []),
+                     use_container_width=True, hide_index=True)
+
+# ── Tab 2: Refused Trades ─────────────────────────────────────────────────────
+with tab_refused:
     if df_refused.empty:
-        st.success("No trades refused yet – all proposals passed the risk gate.")
+        st.markdown("""
+        <div style="padding:40px; text-align:center; color:rgba(148,163,184,0.5);">
+            <div style="font-size:2.2rem; margin-bottom:10px;">🛡️</div>
+            <div style="font-weight:600; font-size:1rem; color:#cbd5e1;">No gate refusals recorded</div>
+        </div>""", unsafe_allow_html=True)
     else:
-        cols_to_show = [c for c in ["timestamp","ticker","option_type","symbol","cost","reason"] if c in df_refused.columns]
-        display = df_refused[cols_to_show].sort_values("timestamp", ascending=False) if "timestamp" in df_refused.columns else df_refused[cols_to_show]
+        c_left, c_right = st.columns([3, 2])
+        with c_left:
+            cols = [c for c in ["timestamp","ticker","option_type","reason"] if c in df_refused]
+            disp = df_refused[cols].sort_values("timestamp", ascending=False) if "timestamp" in df_refused else df_refused[cols]
+            styled = disp.style.map(lambda v: "color:#f43f5e; font-size:0.82rem", subset=["reason"] if "reason" in disp else [])
+            st.dataframe(styled, use_container_width=True, hide_index=True)
 
-        # Colour-code refusal reasons
-        def highlight_reason(val):
-            colours = {
-                "Outside market hours":     "#1c1010",
-                "Max positions":            "#1c1010",
-                "Daily loss limit":         "#200a0a",
-                "Trade cost":               "#1a1010",
-                "Concentration":            "#18100a",
-                "Confidence":               "#101820",
-            }
-            for k, bg in colours.items():
-                if k in str(val):
-                    return f"background-color: {bg}; color: #f97583"
-            return "color: #f97583"
+        with c_right:
+            if "reason" in df_refused.columns:
+                reason_counts = (df_refused["reason"]
+                                 .str.split("(").str[0].str.strip()
+                                 .value_counts().reset_index())
+                reason_counts.columns = ["Reason","Count"]
+                fig4 = go.Figure(go.Bar(
+                    x=reason_counts["Count"],
+                    y=reason_counts["Reason"],
+                    orientation="h",
+                    marker=dict(
+                        color=reason_counts["Count"],
+                        colorscale=[[0,"#7c3aed"],[1,"#f43f5e"]],
+                    ),
+                    hovertemplate="<b>%{y}</b>: %{x}<extra></extra>",
+                ))
+                fig4.update_layout(**CHART_LAYOUT, title="Refusal Reasons Breakdown")
+                st.plotly_chart(fig4, use_container_width=True)
 
-        styled = display.style.map(highlight_reason, subset=["reason"] if "reason" in display.columns else [])
-        st.dataframe(styled, use_container_width=True, hide_index=True)
-
-        # Pie chart of refusal reasons
-        if "reason" in df_refused.columns:
-            reason_counts = df_refused["reason"].str.split("(").str[0].str.strip().value_counts().reset_index()
-            reason_counts.columns = ["Reason", "Count"]
-            fig2 = px.pie(
-                reason_counts, values="Count", names="Reason",
-                title="Refusal Reason Breakdown",
-                color_discrete_sequence=px.colors.sequential.Reds_r,
-                hole=0.4,
-            )
-            fig2.update_layout(
-                paper_bgcolor="rgba(0,0,0,0)",
-                font=dict(color="#8b949e", family="Inter"),
-                height=300,
-                margin=dict(l=0, r=0, t=30, b=0),
-            )
-            st.plotly_chart(fig2, use_container_width=True)
-
-# ── Sentiment Log ─────────────────────────────────────────────────────────────
-with tab3:
-    st.markdown('<div class="section-header">🧠 Claude Sentiment Analysis Log</div>', unsafe_allow_html=True)
+# ── Tab 3: Sentiment Intelligence ─────────────────────────────────────────────
+with tab_sentiment:
     if df_sent.empty:
-        st.info("No sentiment data yet.")
+        st.markdown("""
+        <div style="padding:40px; text-align:center; color:rgba(148,163,184,0.5);">
+            <div style="font-size:2.2rem; margin-bottom:10px;">🧠</div>
+            <div style="font-weight:600; font-size:1rem; color:#cbd5e1;">No sentiment history found</div>
+        </div>""", unsafe_allow_html=True)
     else:
-        cols_to_show = [c for c in ["timestamp","ticker","sentiment","confidence","suggested_trade","reasoning"] if c in df_sent.columns]
-        display = df_sent[cols_to_show].sort_values("timestamp", ascending=False) if "timestamp" in df_sent.columns else df_sent[cols_to_show]
+        c_sent, c_bar = st.columns([3, 2])
+        with c_sent:
+            cols = [c for c in ["timestamp","ticker","sentiment","confidence",
+                                 "suggested_trade","reasoning"] if c in df_sent]
+            disp = df_sent[cols].sort_values("timestamp", ascending=False) if "timestamp" in df_sent else df_sent[cols]
 
-        def colour_sentiment(val):
-            if val == "BULLISH":  return "color: #3fb950; font-weight:600"
-            if val == "BEARISH":  return "color: #f97583; font-weight:600"
-            return "color: #e3b341; font-weight:600"
+            def color_sent(v):
+                return {
+                    "BULLISH": "color:#10b981; font-weight:700",
+                    "BEARISH": "color:#f43f5e; font-weight:700",
+                    "NEUTRAL": "color:#f59e0b; font-weight:700",
+                }.get(v, "")
 
-        if "sentiment" in display.columns:
-            styled2 = display.style.map(colour_sentiment, subset=["sentiment"])
-            st.dataframe(styled2, use_container_width=True, hide_index=True)
-        else:
-            st.dataframe(display, use_container_width=True, hide_index=True)
+            styled3 = disp.style.map(color_sent, subset=["sentiment"] if "sentiment" in disp else [])
+            st.dataframe(styled3, use_container_width=True, hide_index=True)
 
-        # Sentiment distribution bar chart
-        if "sentiment" in df_sent.columns and "ticker" in df_sent.columns:
-            pivot = df_sent.groupby(["ticker","sentiment"]).size().reset_index(name="count")
-            color_map = {"BULLISH": "#3fb950", "BEARISH": "#f97583", "NEUTRAL": "#e3b341"}
-            fig3 = px.bar(
-                pivot, x="ticker", y="count", color="sentiment",
-                color_discrete_map=color_map,
-                barmode="group",
-                title="Sentiment Breakdown by Ticker",
-            )
-            fig3.update_layout(
-                paper_bgcolor="rgba(0,0,0,0)",
-                plot_bgcolor="rgba(22,27,34,0.7)",
-                font=dict(color="#8b949e", family="Inter"),
-                xaxis=dict(gridcolor="#21262d"),
-                yaxis=dict(gridcolor="#21262d"),
-                height=280,
-                margin=dict(l=0, r=0, t=30, b=0),
-                legend=dict(bgcolor="rgba(0,0,0,0)"),
-            )
-            st.plotly_chart(fig3, use_container_width=True)
+        with c_bar:
+            if "sentiment" in df_sent and "ticker" in df_sent:
+                pivot = (df_sent.groupby(["ticker","sentiment"]).size().reset_index(name="n"))
+                fig5 = px.bar(
+                    pivot, x="ticker", y="n", color="sentiment",
+                    color_discrete_map={"BULLISH":"#10b981","BEARISH":"#f43f5e","NEUTRAL":"#f59e0b"},
+                    barmode="group",
+                )
+                fig5.update_layout(**CHART_LAYOUT, title="Sentiment Signal Breakdown")
+                st.plotly_chart(fig5, use_container_width=True)
 
-# ── Footer + auto-refresh ─────────────────────────────────────────────────────
-st.markdown("---")
-st.caption("🤖 Autonomous agent running every 30 min • AI suggests • Code decides • Full audit trail")
+# ── Tab 4: Interactive AI Sandbox & Simulator ─────────────────────────────────
+with tab_sandbox:
+    st.markdown("### 🧪 On-Demand Sentiment & Option Proposer")
+    st.caption("Test how the AI evaluates any custom ticker and checks option availability in real-time.")
 
-# Streamlit auto-rerun
-import time as _time
-_time.sleep(refresh_interval)
-st.rerun()
+    sb_col1, sb_col2 = st.columns([1, 2])
+    with sb_col1:
+        test_ticker = st.text_input("Enter Ticker", value="NVDA").upper().strip()
+        num_news = st.slider("News Articles to Fetch", min_value=3, max_value=15, value=7)
+        run_test_btn = st.button("🔍 Analyze & Propose Option", use_container_width=True)
+
+    with sb_col2:
+        if run_test_btn and test_ticker:
+            with st.spinner(f"Fetching Google News and querying Gemini for {test_ticker}..."):
+                fetcher = NewsFetcher()
+                analyzer = SentimentAnalyzer()
+                proposer = TradeProposer()
+                gate = RiskGate()
+
+                articles = fetcher.fetch(test_ticker, max_results=num_news)
+                st.write(f"📰 **Fetched {len(articles)} recent articles for {test_ticker}**")
+
+                signal = analyzer.analyze(test_ticker, articles)
+                if signal:
+                    sentiment = signal.get("sentiment", "NEUTRAL")
+                    conf = float(signal.get("confidence", 0))
+                    trade = signal.get("suggested_trade")
+                    reasoning = signal.get("reasoning", "")
+
+                    color = "#10b981" if sentiment == "BULLISH" else ("#f43f5e" if sentiment == "BEARISH" else "#f59e0b")
+                    st.markdown(f"""
+                    <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:16px; margin:10px 0;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-size:1.2rem; font-weight:800; color:#f8fafc;">{test_ticker}</span>
+                            <span style="font-size:1rem; font-weight:800; color:{color};">{sentiment} ({conf*100:.0f}%)</span>
+                        </div>
+                        <div style="font-size:0.85rem; color:#cbd5e1; margin-top:8px;"><b>Reasoning:</b> {reasoning}</div>
+                        <div style="font-size:0.85rem; color:#a78bfa; margin-top:6px;"><b>Suggested Trade:</b> {trade or 'None'}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                    if trade:
+                        st.markdown("#### 🎯 Option Contract Selection")
+                        prop = proposer.propose(signal)
+                        if prop:
+                            st.json(prop)
+                            approved, reason = gate.check(prop)
+                            if approved:
+                                st.success("✅ **Risk Gate PASSED** – Contract would be submitted live!")
+                            else:
+                                st.warning(f"❌ **Risk Gate REFUSED**: {reason}")
+                        else:
+                            st.info("No matching ATM contract found within 7–45 DTE range.")
+                else:
+                    st.error("Failed to generate sentiment analysis.")
+
+# ── Footer ────────────────────────────────────────────────────────────────────
+st.markdown("<div style='height:24px'></div>", unsafe_allow_html=True)
+st.markdown("""
+<div style="
+    display: flex; align-items: center; justify-content: space-between;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    padding-top: 16px;
+    color: rgba(148,163,184,0.45);
+    font-size: 0.76rem;
+">
+    <div>⚡ Sentinel Options • Real-time AI Trading Engine</div>
+    <div style="font-family:'JetBrains Mono',monospace;">AI reads news → Model proposes → Code enforces risk</div>
+    <div>Auto-refreshes every 60s</div>
+</div>
+""", unsafe_allow_html=True)
+
+# ── Auto-Refresh Handling ─────────────────────────────────────────────────────
+if auto_refresh:
+    time.sleep(60)
+    st.rerun()
