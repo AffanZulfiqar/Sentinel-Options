@@ -1,0 +1,35 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+
+# Environment
+.env
+.venv
+venv/
+env/
+
+# Data files (keep structure, ignore runtime data)
+data/*.json
+!data/.gitkeep
+
+# Logs
+*.log
+logs/
+
+# IDE
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Testing
+.pytest_cache/
+htmlcov/
+.coverage

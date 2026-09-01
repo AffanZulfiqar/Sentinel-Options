@@ -1,0 +1,2 @@
+# This file ensures the data/ directory is tracked by git.
+# Runtime JSON log files in this directory are git-ignored.

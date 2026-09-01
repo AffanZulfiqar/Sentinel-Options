@@ -1,0 +1,22 @@
+# Core AI / API
+anthropic>=0.18.0
+python-dotenv>=1.0.0
+
+# News
+feedparser>=6.0.10
+requests>=2.31.0
+
+# Dashboard
+streamlit>=1.28.0
+plotly>=5.17.0
+
+# Scheduling
+schedule>=1.2.0
+
+# Data
+pandas>=2.0.0
+python-dateutil>=2.8.2
+pytz>=2023.3
+
+# Alpaca
+alpaca-py>=0.22.0
