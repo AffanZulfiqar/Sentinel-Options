@@ -38,7 +38,8 @@ class _Config:
     # ── Trading Universe ────────────────────────────────────────────────────
     @property
     def WATCHLIST(self) -> List[str]:
-        return os.getenv("WATCHLIST", "AAPL,TSLA,NVDA,MSFT,GOOGL").split(",")
+        val = os.getenv("WATCHLIST", "NVDA, AAPL")
+        return [x.strip() for x in val.split(",") if x.strip()]
 
     # ── Risk Limits ─────────────────────────────────────────────────────────
     @property
