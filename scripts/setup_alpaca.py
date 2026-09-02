@@ -23,9 +23,9 @@ def main():
     # Validate env
     try:
         Config.validate()
-        print("✅ All API keys present")
+        print("[OK] All API keys present")
     except ValueError as exc:
-        print(f"❌ {exc}")
+        print(f"[FAIL] {exc}")
         print("\nPlease fill in your .env file and try again.")
         sys.exit(1)
 
@@ -34,31 +34,31 @@ def main():
         from alpaca.trading.client import TradingClient
         client = TradingClient(Config.ALPACA_API_KEY, Config.ALPACA_SECRET_KEY, paper=True)
         acct = client.get_account()
-        print(f"\n📊 Account Details:")
+        print(f"\n[INFO] Account Details:")
         print(f"   Status          : {acct.status}")
         print(f"   Equity          : ${float(acct.equity or 0):>12,.2f}")
         print(f"   Cash            : ${float(acct.cash or 0):>12,.2f}")
         print(f"   Buying Power    : ${float(acct.buying_power or 0):>12,.2f}")
         print(f"   Portfolio Value : ${float(acct.portfolio_value or 0):>12,.2f}")
-        print(f"\n✅ Paper account connected successfully!")
+        print(f"\n[OK] Paper account connected successfully!")
     except Exception as exc:
-        print(f"❌ Failed to connect to Alpaca: {exc}")
+        print(f"[FAIL] Failed to connect to Alpaca: {exc}")
         sys.exit(1)
 
-    # Verify Claude
+    # Verify Gemini
     try:
-        import anthropic
-        client_ai = anthropic.Anthropic(api_key=Config.ANTHROPIC_API_KEY)
-        msg = client_ai.messages.create(
-            model=Config.CLAUDE_MODEL,
-            max_tokens=10,
-            messages=[{"role": "user", "content": "ping"}],
+        from google import genai
+        client_ai = genai.Client(api_key=Config.GEMINI_API_KEY)
+        # Quick test request to verify the key
+        client_ai.models.generate_content(
+            model=Config.GEMINI_MODEL,
+            contents="ping"
         )
-        print(f"✅ Claude API connected  (model={Config.CLAUDE_MODEL})")
+        print(f"[OK] Gemini API connected  (model={Config.GEMINI_MODEL})")
     except Exception as exc:
-        print(f"❌ Claude API error: {exc}")
+        print(f"[FAIL] Gemini API error: {exc}")
 
-    print("\n🚀 Ready to run: python -m src.agent_controller")
+    print("\n[READY] Ready to run: python -m src.agent_controller")
     print("=" * 55)
 
 
