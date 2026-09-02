@@ -180,7 +180,7 @@ if trigger_cycle:
             analyzer = SentimentAnalyzer()
         except ValueError as key_err:
             st.error(f"⚠️ API key not configured: {key_err}")
-            st.info("Go to Railway → Variables → add `GEMINI_API_KEY`.")
+            st.info("Please set the `GEMINI_API_KEY` in your `.env` file or deployment environment variables.")
             st.stop()
         proposer   = TradeProposer()
         risk_gate  = RiskGate(portfolio)
@@ -620,7 +620,7 @@ with tab_sandbox:
                 pb.empty()
                 sp.empty()
                 st.error(f"⚠️ API key not configured: {key_err}")
-                st.info("Go to Railway → Variables → add `GEMINI_API_KEY`.")
+                st.info("Please set the `GEMINI_API_KEY` in your `.env` file or deployment environment variables.")
                 st.stop()
             signal = analyzer.analyze(test_ticker, articles)
             pb.progress(75)
