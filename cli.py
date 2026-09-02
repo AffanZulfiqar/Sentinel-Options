@@ -74,10 +74,29 @@ def main():
         run_full_cycle()
     elif args.command == "status":
         from alpaca.trading.client import TradingClient
+        from alpaca.trading.requests import GetOrdersRequest
+        from alpaca.trading.enums import QueryOrderStatus
+        
         client = TradingClient(Config.ALPACA_API_KEY, Config.ALPACA_SECRET_KEY, paper=True)
         acct = client.get_account()
+        
         print(f"Portfolio Value: ${float(acct.portfolio_value):.2f}")
         print(f"Buying Power:    ${float(acct.buying_power):.2f}")
+        
+        print("\n--- Open Positions ---")
+        positions = client.get_all_positions()
+        if not positions:
+            print("No open positions.")
+        for p in positions:
+            print(f"{p.symbol}: {p.qty} contracts | Unrealized P&L: ${float(p.unrealized_pl):.2f}")
+            
+        print("\n--- Today's Pending Orders ---")
+        req = GetOrdersRequest(status=QueryOrderStatus.OPEN)
+        orders = client.get_orders(req)
+        if not orders:
+            print("No pending orders.")
+        for o in orders:
+            print(f"{o.symbol}: {o.qty} contracts | Status: {o.status.name}")
     else:
         parser.print_help()
 
