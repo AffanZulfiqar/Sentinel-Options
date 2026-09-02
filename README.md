@@ -147,22 +147,33 @@ python scripts/setup_alpaca.py
 
 ## Running
 
-Start the autonomous agent:
+You can interact with Sentinel Options via the **Dashboard** or the **CLI**.
+
+### 1. The CLI (Command Line Interface)
+This project fulfills the hackathon CLI requirement with a dedicated command-line tool.
 
 ```bash
-python -m src.agent_controller
+# Check your Alpaca portfolio status
+python cli.py status
+
+# Run sentiment analysis on a specific ticker
+python cli.py analyze AAPL
+
+# Trigger one full autonomous pipeline cycle
+python cli.py run
 ```
 
-Launch the dashboard (separate terminal):
+### 2. The Dashboard & Background Agent
+Launch the interactive dashboard (separate terminal):
 
 ```bash
 streamlit run dashboard/dashboard.py
 ```
 
-Or run both together (used for deployment):
+Start the autonomous agent in the background (runs every 30 mins):
 
 ```bash
-streamlit run streamlit_app.py
+python -m src.agent_controller
 ```
 
 ---
