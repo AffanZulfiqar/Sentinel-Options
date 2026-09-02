@@ -162,7 +162,7 @@ st.markdown("""
 t_col1, t_col2, t_col3 = st.columns([1, 2, 1])
 with t_col2:
     trigger_cycle = st.button("🚀  Run Full Agent Cycle Now", use_container_width=True)
-    st.markdown("<div style='text-align:center; font-size:0.75rem; color:#64748b; margin-top:4px;'>*Results will populate in the tabs below (Sentiment Log & Risk Gate Audit)*</div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align:center; font-size:0.85rem; font-weight:800; color:#4338ca; margin-top:8px;'>💡 Note for Users: Results from the cycle will populate in the tabs below (Sentiment Log & Risk Gate Audit)</div>", unsafe_allow_html=True)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
