@@ -176,7 +176,12 @@ if trigger_cycle:
 
     try:
         portfolio  = PortfolioTracker()
-        analyzer   = SentimentAnalyzer()
+        try:
+            analyzer = SentimentAnalyzer()
+        except ValueError as key_err:
+            st.error(f"⚠️ API key not configured: {key_err}")
+            st.info("Go to Railway → Variables → add `GEMINI_API_KEY`.")
+            st.stop()
         proposer   = TradeProposer()
         risk_gate  = RiskGate(portfolio)
         executor   = TradeExecutor(portfolio)
@@ -609,7 +614,14 @@ with tab_sandbox:
             articles = fetcher.fetch(test_ticker, max_results=num_news)
             pb.progress(40)
             sp.info(f"**2/3** Running NLP inference for `{test_ticker}`...")
-            analyzer = SentimentAnalyzer()
+            try:
+                analyzer = SentimentAnalyzer()
+            except ValueError as key_err:
+                pb.empty()
+                sp.empty()
+                st.error(f"⚠️ API key not configured: {key_err}")
+                st.info("Go to Railway → Variables → add `GEMINI_API_KEY`.")
+                st.stop()
             signal = analyzer.analyze(test_ticker, articles)
             pb.progress(75)
             sp.info(f"**3/3** Checking option chain & risk gate...")
