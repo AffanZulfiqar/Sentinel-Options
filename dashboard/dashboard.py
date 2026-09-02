@@ -1,5 +1,5 @@
 """
-dashboard.py – Sentinel Options • Interactive Mission Control & Trading Dashboard
+dashboard.py – Sentinel Options • Interactive Mission Control & Trading Dashboard (Modern Light Theme)
 """
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -30,7 +30,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ── Global CSS ────────────────────────────────────────────────────────────────
+# ── Global Light Theme CSS ───────────────────────────────────────────────────
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
@@ -39,9 +39,10 @@ st.markdown("""
     font-family: 'Inter', sans-serif !important;
 }
 
-/* ── Base Theme ── */
+/* ── Base Theme: Crisp Soft Light ── */
 .stApp {
-    background: radial-gradient(ellipse at top left, #0e0d26 0%, #050510 45%, #08081a 100%);
+    background: radial-gradient(ellipse at top left, #f8fafc 0%, #f1f5f9 40%, #ffffff 100%);
+    color: #0f172a;
     min-height: 100vh;
 }
 
@@ -51,70 +52,69 @@ st.markdown("""
 
 /* ── Metric cards ── */
 [data-testid="metric-container"] {
-    background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%);
-    border: 1px solid rgba(255,255,255,0.08);
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
     border-radius: 16px;
     padding: 18px 22px;
-    backdrop-filter: blur(14px);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.08);
-    transition: transform 0.2s ease, border-color 0.2s ease;
+    box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
     position: relative;
     overflow: hidden;
 }
 [data-testid="metric-container"]:hover {
     transform: translateY(-2px);
-    border-color: rgba(124,58,237,0.4);
+    box-shadow: 0 10px 24px -4px rgba(99, 102, 241, 0.12);
+    border-color: #cbd5e1;
 }
 [data-testid="metric-container"]::before {
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, #7c3aed, #06b6d4, #10b981);
-    opacity: 0.9;
+    height: 3px;
+    background: linear-gradient(90deg, #6366f1, #06b6d4, #10b981);
 }
 [data-testid="metric-container"] label {
-    color: rgba(148,163,184,0.85) !important;
-    font-size: 0.72rem !important;
+    color: #64748b !important;
+    font-size: 0.74rem !important;
     text-transform: uppercase !important;
     letter-spacing: 1.2px !important;
-    font-weight: 600 !important;
+    font-weight: 700 !important;
 }
 [data-testid="stMetricValue"] {
-    color: #f8fafc !important;
-    font-size: 1.85rem !important;
+    color: #0f172a !important;
+    font-size: 1.9rem !important;
     font-weight: 800 !important;
     line-height: 1.1 !important;
 }
-[data-testid="stMetricDelta"] { font-size: 0.8rem !important; font-weight: 600 !important; }
+[data-testid="stMetricDelta"] { font-size: 0.82rem !important; font-weight: 700 !important; }
 
 /* ── Interactive Buttons ── */
 .stButton > button {
-    background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%) !important;
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important;
     color: #ffffff !important;
-    border: 1px solid rgba(255,255,255,0.15) !important;
+    border: none !important;
     border-radius: 12px !important;
     font-weight: 600 !important;
     letter-spacing: 0.3px !important;
-    padding: 0.55rem 1.4rem !important;
-    box-shadow: 0 4px 20px rgba(124,58,237,0.35) !important;
+    padding: 0.6rem 1.4rem !important;
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35) !important;
     transition: all 0.2s ease !important;
 }
 .stButton > button:hover {
-    box-shadow: 0 6px 28px rgba(124,58,237,0.6) !important;
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.55) !important;
     transform: translateY(-1px) !important;
 }
 
 /* ── Tabs ── */
 .stTabs [data-baseweb="tab-list"] {
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.06);
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
     border-radius: 12px;
     padding: 5px;
     gap: 6px;
 }
 .stTabs [data-baseweb="tab"] {
-    color: rgba(148,163,184,0.7);
+    color: #64748b;
     border-radius: 8px;
     font-size: 0.86rem;
     font-weight: 600;
@@ -122,46 +122,29 @@ st.markdown("""
     border: none;
 }
 .stTabs [aria-selected="true"] {
-    background: linear-gradient(135deg, rgba(124,58,237,0.35), rgba(6,182,212,0.25)) !important;
-    color: #f8fafc !important;
-    border: 1px solid rgba(124,58,237,0.5) !important;
+    background: #ffffff !important;
+    color: #4338ca !important;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06) !important;
+    border: 1px solid #e2e8f0 !important;
 }
 
 /* ── DataFrames ── */
 .stDataFrame {
     border-radius: 12px;
     overflow: hidden;
-    border: 1px solid rgba(255,255,255,0.08) !important;
-}
-
-/* ── Progress & Status Stepper ── */
-.step-box {
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.07);
-    border-radius: 12px;
-    padding: 12px 16px;
-    margin-bottom: 8px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.82rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-.step-active {
-    border-color: #7c3aed;
-    background: rgba(124,58,237,0.12);
-    color: #e2e8f0;
-}
-.step-done {
-    border-color: #10b981;
-    background: rgba(16,185,129,0.08);
-    color: #34d399;
+    border: 1px solid #e2e8f0 !important;
+    background: #ffffff !important;
 }
 
 /* ── Sidebar ── */
 [data-testid="stSidebar"] {
-    background: rgba(8,8,22,0.95) !important;
-    border-right: 1px solid rgba(255,255,255,0.08);
+    background: #ffffff !important;
+    border-right: 1px solid #e2e8f0;
+}
+
+/* ── Inputs ── */
+.stTextInput > div > div > input, .stSlider {
+    color: #0f172a !important;
 }
 
 /* ── Animations ── */
@@ -169,10 +152,6 @@ st.markdown("""
     0%   { transform: scale(1);   opacity: 1; }
     70%  { transform: scale(1.6); opacity: 0; }
     100% { transform: scale(1);   opacity: 0; }
-}
-@keyframes glow {
-    0%, 100% { box-shadow: 0 0 20px rgba(124,58,237,0.3); }
-    50%       { box-shadow: 0 0 35px rgba(124,58,237,0.6), 0 0 60px rgba(6,182,212,0.2); }
 }
 @keyframes ticker-scroll {
     0%   { transform: translateX(0); }
@@ -184,27 +163,35 @@ st.markdown("""
 # ── Sidebar Controls ──────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown("""
-    <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:20px; padding-bottom:12px; border-bottom:1px solid #e2e8f0;">
         <div style="font-size:1.6rem;">⚡</div>
-        <div style="font-size:1.1rem; font-weight:800; color:#f8fafc; letter-spacing:0.5px;">MISSION CONTROL</div>
+        <div>
+            <div style="font-size:1.05rem; font-weight:800; color:#0f172a; letter-spacing:0.3px;">MISSION CONTROL</div>
+            <div style="font-size:0.7rem; color:#64748b; font-weight:600;">Autonomous Engine</div>
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown("### 🎮 Live Actions")
+    st.markdown("##### 🎮 Live Execution")
     trigger_cycle = st.button("🚀 Trigger Full Cycle Now", use_container_width=True)
 
-    st.markdown("---")
-    st.markdown("### ⚙️ Engine Settings")
-    st.caption(f"**Execution Mode**: `{'PAPER TRADING' if 'paper' in Config.ALPACA_BASE_URL else 'LIVE TRADING'}`")
-    st.caption(f"**AI Pipeline**: `Proprietary NLP & Multi-Head Signal Engine`")
-    st.caption(f"**Watchlist**: `{', '.join(Config.WATCHLIST)}`")
-    st.caption(f"**Risk Gate Max/Trade**: `${Config.MAX_LOSS_PER_TRADE:,.0f}`")
-    st.caption(f"**Take Profit / Stop Loss**: `+{int(Config.TAKE_PROFIT_PCT*100)}% / -{int(Config.STOP_LOSS_PCT*100)}%`")
+    st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
+    st.markdown("##### 📡 UI Controls")
+    auto_refresh = st.checkbox("Auto-refresh UI (60s)", value=True)
+    if st.button("🔄 Refresh Telemetry", use_container_width=True):
+        st.rerun()
 
     st.markdown("---")
-    auto_refresh = st.checkbox("Auto-refresh UI (60s)", value=True)
-    if st.button("🔄 Refresh Data", use_container_width=True):
-        st.rerun()
+    st.markdown("""
+    <div style="font-size:0.75rem; color:#64748b; line-height:1.5;">
+        <b style="color:#0f172a;">Sentinel Architecture:</b><br>
+        1. Live News Scraping<br>
+        2. Multi-Head Sentiment Signal<br>
+        3. Dynamic ATM Option Selection<br>
+        4. Deterministic Risk Gate<br>
+        5. Position Lifecycle Exits
+    </div>
+    """, unsafe_allow_html=True)
 
 # ── Header Banner ─────────────────────────────────────────────────────────────
 st.markdown("""
@@ -213,47 +200,45 @@ st.markdown("""
     align-items: center;
     justify-content: space-between;
     padding: 18px 24px;
-    margin-bottom: 12px;
-    background: linear-gradient(135deg, rgba(124,58,237,0.14) 0%, rgba(6,182,212,0.07) 100%);
-    border: 1px solid rgba(124,58,237,0.22);
+    margin-bottom: 16px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
     border-radius: 18px;
+    box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.04);
     position: relative;
     overflow: hidden;
 ">
-    <div style="position:absolute; top:0; left:0; right:0; height:1px;
-                background: linear-gradient(90deg, transparent, #7c3aed, #06b6d4, transparent);"></div>
+    <div style="position:absolute; top:0; left:0; right:0; height:3px;
+                background: linear-gradient(90deg, #6366f1, #06b6d4, #10b981);"></div>
     <div style="display:flex; align-items:center; gap:16px;">
         <div style="
             width: 48px; height: 48px;
-            background: linear-gradient(135deg, #7c3aed, #06b6d4);
+            background: linear-gradient(135deg, #6366f1, #06b6d4);
             border-radius: 14px;
             display: flex; align-items: center; justify-content: center;
             font-size: 1.5rem;
-            box-shadow: 0 0 25px rgba(124,58,237,0.5);
-            animation: glow 3s ease-in-out infinite;
+            color: #ffffff;
+            box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3);
         ">⚡</div>
         <div>
             <div style="
-                font-size: 1.7rem;
+                font-size: 1.65rem;
                 font-weight: 900;
-                background: linear-gradient(135deg, #f8fafc 0%, #a78bfa 50%, #38bdf8 100%);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-                background-clip: text;
+                color: #0f172a;
                 letter-spacing: -0.5px;
                 line-height: 1.1;
             ">SENTINEL OPTIONS</div>
-            <div style="color: rgba(148,163,184,0.75); font-size: 0.76rem; font-weight: 500;
-                        letter-spacing: 1.5px; text-transform: uppercase; margin-top: 2px;">
-                Autonomous Options Engine · Live Market NLP · Deterministic Risk Gate
+            <div style="color: #64748b; font-size: 0.78rem; font-weight: 600;
+                        letter-spacing: 1.2px; text-transform: uppercase; margin-top: 2px;">
+                Autonomous Options Engine · Multi-Head Sentiment Signal · Deterministic Risk Gate
             </div>
         </div>
     </div>
     <div style="display:flex; align-items:center; gap:12px;">
         <div style="
             display: flex; align-items: center; gap: 8px;
-            background: rgba(16,185,129,0.12);
-            border: 1px solid rgba(16,185,129,0.35);
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
             border-radius: 30px;
             padding: 6px 16px;
         ">
@@ -262,15 +247,46 @@ st.markdown("""
                             animation: pulse-ring 2s ease-out infinite;"></div>
                 <div style="width:9px; height:9px; background:#10b981; border-radius:50%;"></div>
             </div>
-            <span style="color:#10b981; font-size:0.8rem; font-weight:700; letter-spacing:1px;">ACTIVE</span>
+            <span style="color:#059669; font-size:0.8rem; font-weight:800; letter-spacing:0.8px;">SYSTEM ACTIVE</span>
         </div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+# ── Polished Engine Parameters Bar (Replacing weird text with modern cards) ────
+st.markdown(f"""
+<div style="
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+">
+    <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:12px 16px; box-shadow:0 2px 6px rgba(0,0,0,0.02);">
+        <div style="font-size:0.68rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.8px;">Trading Mode</div>
+        <div style="font-size:0.95rem; font-weight:800; color:#0f172a; margin-top:2px;">{'Paper Trading' if 'paper' in Config.ALPACA_BASE_URL else 'Live Trading'}</div>
+        <div style="font-size:0.7rem; color:#10b981; font-weight:600; margin-top:2px;">● Connected to Alpaca</div>
+    </div>
+    <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:12px 16px; box-shadow:0 2px 6px rgba(0,0,0,0.02);">
+        <div style="font-size:0.68rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.8px;">Active Watchlist</div>
+        <div style="font-size:0.95rem; font-weight:800; color:#0f172a; margin-top:2px;">{', '.join(Config.WATCHLIST)}</div>
+        <div style="font-size:0.7rem; color:#6366f1; font-weight:600; margin-top:2px;">● {len(Config.WATCHLIST)} Target Equities</div>
+    </div>
+    <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:12px 16px; box-shadow:0 2px 6px rgba(0,0,0,0.02);">
+        <div style="font-size:0.68rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.8px;">Max Allocation / Trade</div>
+        <div style="font-size:0.95rem; font-weight:800; color:#0f172a; margin-top:2px;">${Config.MAX_LOSS_PER_TRADE:,.0f}</div>
+        <div style="font-size:0.7rem; color:#0ea5e9; font-weight:600; margin-top:2px;">● Risk Gate Hard Ceiling</div>
+    </div>
+    <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:12px 16px; box-shadow:0 2px 6px rgba(0,0,0,0.02);">
+        <div style="font-size:0.68rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.8px;">Exit Rules</div>
+        <div style="font-size:0.95rem; font-weight:800; color:#0f172a; margin-top:2px;">+{int(Config.TAKE_PROFIT_PCT*100)}% / -{int(Config.STOP_LOSS_PCT*100)}%</div>
+        <div style="font-size:0.7rem; color:#f59e0b; font-weight:600; margin-top:2px;">● Auto Take-Profit & Stop-Loss</div>
     </div>
 </div>
 """, unsafe_allow_html=True)
 
 # ── Live Cycle Execution Stepper ──────────────────────────────────────────────
 if trigger_cycle:
-    st.markdown("### ⚡ Live Pipeline Telemetry")
+    st.markdown("#### ⚡ Live Pipeline Telemetry")
     progress_bar = st.progress(0)
     status_box = st.empty()
     live_log = st.empty()
@@ -360,35 +376,36 @@ c3.metric("✅ Executed Orders", len(trades))
 c4.metric("🚫 Gate Refusals",   len(refused_trades), help="Proposals blocked by deterministic rules")
 c5.metric("📋 Open Positions",  open_positions)
 
-st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
+st.markdown("<div style='height:14px'></div>", unsafe_allow_html=True)
 
 # ── Live Sentiment Ticker Bar ─────────────────────────────────────────────────
 if not df_sent.empty and "ticker" in df_sent and "sentiment" in df_sent:
     latest = df_sent.drop_duplicates("ticker", keep="last").to_dict("records")
     def sent_color(s):
-        return {"BULLISH":"#10b981","BEARISH":"#f43f5e","NEUTRAL":"#f59e0b"}.get(s,"#94a3b8")
+        return {"BULLISH":"#059669","BEARISH":"#e11d48","NEUTRAL":"#d97706"}.get(s,"#475569")
     def sent_icon(s):
         return {"BULLISH":"▲","BEARISH":"▼","NEUTRAL":"◆"}.get(s,"·")
 
     items = "".join([
-        f'<span style="margin:0 24px; color:rgba(148,163,184,0.4)">|</span>'
-        f'<span style="color:#cbd5e1; font-weight:700; font-size:0.88rem;">{r["ticker"]}</span>'
-        f'<span style="color:{sent_color(r["sentiment"])}; margin-left:6px; font-weight:700; font-size:0.88rem;">'
+        f'<span style="margin:0 24px; color:#cbd5e1">|</span>'
+        f'<span style="color:#0f172a; font-weight:800; font-size:0.88rem;">{r["ticker"]}</span>'
+        f'<span style="color:{sent_color(r["sentiment"])}; margin-left:6px; font-weight:800; font-size:0.88rem;">'
         f'{sent_icon(r["sentiment"])} {r["sentiment"]}</span>'
-        f'<span style="color:{sent_color(r["sentiment"])}; margin-left:5px; font-size:0.75rem; opacity:0.85;">'
+        f'<span style="color:{sent_color(r["sentiment"])}; margin-left:5px; font-size:0.78rem; font-weight:700;">'
         f'{float(r.get("confidence",0))*100:.0f}%</span>'
         for r in latest
     ] * 3)
 
     st.markdown(f"""
     <div style="
-        background: rgba(255,255,255,0.02);
-        border: 1px solid rgba(255,255,255,0.06);
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
         border-radius: 12px;
         padding: 9px 0;
         overflow: hidden;
-        margin-bottom: 18px;
+        margin-bottom: 20px;
         white-space: nowrap;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.02);
     ">
         <div style="
             display: inline-block;
@@ -404,8 +421,8 @@ col_chart, col_donut = st.columns([3, 1])
 
 with col_chart:
     st.markdown("""
-    <div style="color:#94a3b8; font-size:0.72rem; text-transform:uppercase;
-                letter-spacing:1.8px; font-weight:600; margin-bottom:8px;">
+    <div style="color:#475569; font-size:0.75rem; text-transform:uppercase;
+                letter-spacing:1.5px; font-weight:700; margin-bottom:8px;">
         ◈ Portfolio Equity Curve
     </div>""", unsafe_allow_html=True)
 
@@ -415,31 +432,31 @@ with col_chart:
         fig.add_trace(go.Scatter(
             x=df_port["timestamp"], y=df_port["equity"],
             fill="tozeroy",
-            fillcolor="rgba(124,58,237,0.08)",
+            fillcolor="rgba(99, 102, 241, 0.06)",
             line=dict(color="rgba(0,0,0,0)", width=0),
             showlegend=False, hoverinfo="skip",
         ))
         fig.add_trace(go.Scatter(
             x=df_port["timestamp"], y=df_port["equity"],
             mode="lines+markers",
-            line=dict(color="#8b5cf6", width=2.5, shape="spline"),
-            marker=dict(size=5, color="#06b6d4", line=dict(color="#0f0c29", width=2)),
+            line=dict(color="#6366f1", width=2.5, shape="spline"),
+            marker=dict(size=5, color="#06b6d4", line=dict(color="#ffffff", width=2)),
             name="Equity",
             hovertemplate="<b>$%{y:,.2f}</b><br>%{x}<extra></extra>",
         ))
         fig.add_hline(
             y=START_EQUITY,
-            line=dict(color="rgba(148,163,184,0.25)", dash="dot", width=1),
+            line=dict(color="#cbd5e1", dash="dot", width=1.5),
             annotation_text="Base $100K",
-            annotation_font=dict(color="rgba(148,163,184,0.5)", size=10),
+            annotation_font=dict(color="#64748b", size=10),
         )
         fig.update_layout(
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
-            font=dict(color="#94a3b8", family="Inter"),
-            xaxis=dict(gridcolor="rgba(255,255,255,0.04)", showgrid=True, zeroline=False),
-            yaxis=dict(gridcolor="rgba(255,255,255,0.04)", showgrid=True, zeroline=False, tickprefix="$"),
-            height=250, margin=dict(l=0, r=0, t=8, b=0),
+            paper_bgcolor="#ffffff",
+            plot_bgcolor="#ffffff",
+            font=dict(color="#475569", family="Inter"),
+            xaxis=dict(gridcolor="#f1f5f9", showgrid=True, zeroline=False),
+            yaxis=dict(gridcolor="#f1f5f9", showgrid=True, zeroline=False, tickprefix="$"),
+            height=260, margin=dict(l=10, r=10, t=10, b=10),
             showlegend=False,
             hovermode="x unified",
         )
@@ -449,8 +466,8 @@ with col_chart:
 
 with col_donut:
     st.markdown("""
-    <div style="color:#94a3b8; font-size:0.72rem; text-transform:uppercase;
-                letter-spacing:1.8px; font-weight:600; margin-bottom:8px;">
+    <div style="color:#475569; font-size:0.75rem; text-transform:uppercase;
+                letter-spacing:1.5px; font-weight:700; margin-bottom:8px;">
         ◈ Signal Distribution
     </div>""", unsafe_allow_html=True)
 
@@ -466,26 +483,25 @@ with col_donut:
             hovertemplate="<b>%{label}</b>: %{value} signals<extra></extra>",
         ))
         fig2.add_annotation(
-            text=f"<b>{len(df_sent)}</b><br><span style='font-size:10px; color:#94a3b8'>TOTAL</span>",
+            text=f"<b>{len(df_sent)}</b><br><span style='font-size:10px; color:#64748b'>TOTAL</span>",
             x=0.5, y=0.5, showarrow=False,
-            font=dict(size=15, color="#f8fafc"),
+            font=dict(size=15, color="#0f172a"),
         )
         fig2.update_layout(
-            paper_bgcolor="rgba(0,0,0,0)",
-            font=dict(color="#94a3b8", family="Inter"),
-            height=250, margin=dict(l=0, r=0, t=8, b=0),
+            paper_bgcolor="#ffffff",
+            font=dict(color="#475569", family="Inter"),
+            height=260, margin=dict(l=10, r=10, t=10, b=10),
             showlegend=True,
             legend=dict(
-                font=dict(size=10, color="#94a3b8"),
-                bgcolor="rgba(0,0,0,0)",
+                font=dict(size=10, color="#475569"),
                 orientation="h", x=0.5, xanchor="center", y=-0.15,
             ),
         )
         st.plotly_chart(fig2, use_container_width=True)
     else:
-        st.markdown("<div style='color:#64748b; font-size:0.85rem; padding:40px 0;'>No sentiment records yet.</div>", unsafe_allow_html=True)
+        st.markdown("<div style='color:#94a3b8; font-size:0.85rem; padding:40px 0;'>No sentiment records yet.</div>", unsafe_allow_html=True)
 
-st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
 
 # ── Main Tabs: Data & Interactive Tools ───────────────────────────────────────
 tab_exec, tab_refused, tab_sentiment, tab_sandbox = st.tabs([
@@ -496,24 +512,24 @@ tab_exec, tab_refused, tab_sentiment, tab_sandbox = st.tabs([
 ])
 
 CHART_LAYOUT = dict(
-    paper_bgcolor="rgba(0,0,0,0)",
-    plot_bgcolor="rgba(0,0,0,0)",
-    font=dict(color="#94a3b8", family="Inter"),
-    height=240,
-    margin=dict(l=0, r=0, t=24, b=0),
-    legend=dict(bgcolor="rgba(0,0,0,0)"),
-    xaxis=dict(gridcolor="rgba(255,255,255,0.04)"),
-    yaxis=dict(gridcolor="rgba(255,255,255,0.04)"),
+    paper_bgcolor="#ffffff",
+    plot_bgcolor="#ffffff",
+    font=dict(color="#475569", family="Inter"),
+    height=250,
+    margin=dict(l=10, r=10, t=24, b=10),
+    legend=dict(bgcolor="rgba(255,255,255,0.9)"),
+    xaxis=dict(gridcolor="#f1f5f9"),
+    yaxis=dict(gridcolor="#f1f5f9"),
 )
 
 # ── Tab 1: Executed Trades ────────────────────────────────────────────────────
 with tab_exec:
     if df_trades.empty:
         st.markdown("""
-        <div style="padding:40px; text-align:center; color:rgba(148,163,184,0.5);">
+        <div style="padding:40px; text-align:center; background:#ffffff; border:1px solid #e2e8f0; border-radius:12px;">
             <div style="font-size:2.2rem; margin-bottom:10px;">📭</div>
-            <div style="font-weight:600; font-size:1rem; color:#cbd5e1;">No orders placed yet</div>
-            <div style="font-size:0.8rem; margin-top:4px;">Orders execute during live market hours when high-confidence signals fire.</div>
+            <div style="font-weight:700; font-size:1rem; color:#0f172a;">No orders placed yet</div>
+            <div style="font-size:0.82rem; color:#64748b; margin-top:4px;">Orders execute during live market hours when high-confidence signals pass the risk gate.</div>
         </div>""", unsafe_allow_html=True)
     else:
         cols = [c for c in ["timestamp","ticker","option_type","symbol","strike",
@@ -525,8 +541,8 @@ with tab_exec:
         })
 
         def color_type(v):
-            if str(v).lower() == "call": return "color:#10b981; font-weight:700"
-            if str(v).lower() == "put":  return "color:#f43f5e; font-weight:700"
+            if str(v).lower() == "call": return "color:#059669; font-weight:800"
+            if str(v).lower() == "put":  return "color:#e11d48; font-weight:800"
             return ""
 
         st.dataframe(disp.style.map(color_type, subset=["Type"] if "Type" in disp else []),
@@ -536,16 +552,16 @@ with tab_exec:
 with tab_refused:
     if df_refused.empty:
         st.markdown("""
-        <div style="padding:40px; text-align:center; color:rgba(148,163,184,0.5);">
+        <div style="padding:40px; text-align:center; background:#ffffff; border:1px solid #e2e8f0; border-radius:12px;">
             <div style="font-size:2.2rem; margin-bottom:10px;">🛡️</div>
-            <div style="font-weight:600; font-size:1rem; color:#cbd5e1;">No gate refusals recorded</div>
+            <div style="font-weight:700; font-size:1rem; color:#0f172a;">No gate refusals recorded</div>
         </div>""", unsafe_allow_html=True)
     else:
         c_left, c_right = st.columns([3, 2])
         with c_left:
             cols = [c for c in ["timestamp","ticker","option_type","reason"] if c in df_refused]
             disp = df_refused[cols].sort_values("timestamp", ascending=False) if "timestamp" in df_refused else df_refused[cols]
-            styled = disp.style.map(lambda v: "color:#f43f5e; font-size:0.82rem", subset=["reason"] if "reason" in disp else [])
+            styled = disp.style.map(lambda v: "color:#e11d48; font-size:0.82rem; font-weight:600;", subset=["reason"] if "reason" in disp else [])
             st.dataframe(styled, use_container_width=True, hide_index=True)
 
         with c_right:
@@ -560,7 +576,7 @@ with tab_refused:
                     orientation="h",
                     marker=dict(
                         color=reason_counts["Count"],
-                        colorscale=[[0,"#7c3aed"],[1,"#f43f5e"]],
+                        colorscale=[[0,"#6366f1"],[1,"#f43f5e"]],
                     ),
                     hovertemplate="<b>%{y}</b>: %{x}<extra></extra>",
                 ))
@@ -571,9 +587,9 @@ with tab_refused:
 with tab_sentiment:
     if df_sent.empty:
         st.markdown("""
-        <div style="padding:40px; text-align:center; color:rgba(148,163,184,0.5);">
+        <div style="padding:40px; text-align:center; background:#ffffff; border:1px solid #e2e8f0; border-radius:12px;">
             <div style="font-size:2.2rem; margin-bottom:10px;">🧠</div>
-            <div style="font-weight:600; font-size:1rem; color:#cbd5e1;">No sentiment history found</div>
+            <div style="font-weight:700; font-size:1rem; color:#0f172a;">No sentiment history found</div>
         </div>""", unsafe_allow_html=True)
     else:
         c_sent, c_bar = st.columns([3, 2])
@@ -584,9 +600,9 @@ with tab_sentiment:
 
             def color_sent(v):
                 return {
-                    "BULLISH": "color:#10b981; font-weight:700",
-                    "BEARISH": "color:#f43f5e; font-weight:700",
-                    "NEUTRAL": "color:#f59e0b; font-weight:700",
+                    "BULLISH": "color:#059669; font-weight:800",
+                    "BEARISH": "color:#e11d48; font-weight:800",
+                    "NEUTRAL": "color:#d97706; font-weight:800",
                 }.get(v, "")
 
             styled3 = disp.style.map(color_sent, subset=["sentiment"] if "sentiment" in disp else [])
@@ -605,13 +621,13 @@ with tab_sentiment:
 
 # ── Tab 4: Interactive AI Sandbox & Simulator ─────────────────────────────────
 with tab_sandbox:
-    st.markdown("### 🧪 On-Demand Market Intelligence & Option Proposer")
-    st.caption("Test how the AI pipeline evaluates any ticker, reads live news, and finds contracts in real-time.")
+    st.markdown("##### 🧪 On-Demand Market Intelligence & Option Proposer")
+    st.caption("Test how the autonomous pipeline evaluates any ticker, reads live news, and checks option pricing in real-time.")
 
     sb_col1, sb_col2 = st.columns([1, 2])
     with sb_col1:
-        test_ticker = st.text_input("Enter Ticker", value="NVDA").upper().strip()
-        num_news = st.slider("News Articles to Fetch", min_value=3, max_value=15, value=7)
+        test_ticker = st.text_input("Enter Ticker Symbol", value="NVDA").upper().strip()
+        num_news = st.slider("News Headlines to Fetch", min_value=3, max_value=15, value=7)
         run_test_btn = st.button("🔍 Analyze & Propose Option", use_container_width=True)
 
     with sb_col2:
@@ -643,20 +659,20 @@ with tab_sandbox:
                 trade = signal.get("suggested_trade")
                 reasoning = signal.get("reasoning", "")
 
-                color = "#10b981" if sentiment == "BULLISH" else ("#f43f5e" if sentiment == "BEARISH" else "#f59e0b")
+                color = "#059669" if sentiment == "BULLISH" else ("#e11d48" if sentiment == "BEARISH" else "#d97706")
                 st.markdown(f"""
-                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:16px; margin:10px 0;">
+                <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:18px; margin:10px 0; box-shadow:0 4px 12px rgba(0,0,0,0.03);">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-size:1.2rem; font-weight:800; color:#f8fafc;">{test_ticker}</span>
+                        <span style="font-size:1.25rem; font-weight:800; color:#0f172a;">{test_ticker}</span>
                         <span style="font-size:1rem; font-weight:800; color:{color};">{sentiment} ({conf*100:.0f}%)</span>
                     </div>
-                    <div style="font-size:0.85rem; color:#cbd5e1; margin-top:8px;"><b>Reasoning:</b> {reasoning}</div>
-                    <div style="font-size:0.85rem; color:#a78bfa; margin-top:6px;"><b>Suggested Trade:</b> {trade or 'None'}</div>
+                    <div style="font-size:0.88rem; color:#334155; margin-top:8px; line-height:1.5;"><b>Reasoning:</b> {reasoning}</div>
+                    <div style="font-size:0.88rem; color:#4f46e5; font-weight:700; margin-top:8px;"><b>Suggested Trade:</b> {trade or 'None'}</div>
                 </div>
                 """, unsafe_allow_html=True)
 
                 if trade:
-                    st.markdown("#### 🎯 Option Contract Selection")
+                    st.markdown("##### 🎯 Selected Option Contract")
                     prop = proposer.propose(signal)
                     if prop:
                         st.json(prop)
@@ -671,17 +687,17 @@ with tab_sandbox:
                 st.error("Failed to generate sentiment analysis.")
 
 # ── Footer ────────────────────────────────────────────────────────────────────
-st.markdown("<div style='height:24px'></div>", unsafe_allow_html=True)
+st.markdown("<div style='height:28px'></div>", unsafe_allow_html=True)
 st.markdown("""
 <div style="
     display: flex; align-items: center; justify-content: space-between;
-    border-top: 1px solid rgba(255,255,255,0.06);
+    border-top: 1px solid #e2e8f0;
     padding-top: 16px;
-    color: rgba(148,163,184,0.45);
+    color: #64748b;
     font-size: 0.76rem;
 ">
-    <div>⚡ Sentinel Options • Real-time AI Trading Engine</div>
-    <div style="font-family:'JetBrains Mono',monospace;">AI reads news → Model proposes → Code enforces risk</div>
+    <div>⚡ Sentinel Options • Autonomous Trading Engine</div>
+    <div style="font-family:'JetBrains Mono',monospace;">NLP Pipeline → Contract Engine → Deterministic Risk Gate</div>
     <div>Auto-refreshes every 60s</div>
 </div>
 """, unsafe_allow_html=True)
