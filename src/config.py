@@ -1,51 +1,97 @@
 """
 config.py – Central configuration loaded from environment variables.
 All code imports from here; never read os.getenv() directly elsewhere.
+
+Uses properties so environment variables are read at access time,
+not at import time. This ensures Railway/Render injected vars work.
 """
 import os
 from typing import List
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv()  # local dev: reads .env file; on Railway: no-op (vars already set)
 
 
-class Config:
+class _Config:
+    """Singleton config that reads env vars lazily (on access, not import)."""
+
     # ── Alpaca ──────────────────────────────────────────────────────────────
-    ALPACA_API_KEY:    str = os.getenv("ALPACA_API_KEY", "")
-    ALPACA_SECRET_KEY: str = os.getenv("ALPACA_SECRET_KEY", "")
-    ALPACA_BASE_URL:   str = os.getenv("ALPACA_BASE_URL", "https://paper-api.alpaca.markets")
+    @property
+    def ALPACA_API_KEY(self) -> str:
+        return os.getenv("ALPACA_API_KEY", "")
 
-    # ── Google Gemini ─────────────────────────────────────────────────────────
-    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
-    GEMINI_MODEL:   str = "gemini-3.6-flash"
+    @property
+    def ALPACA_SECRET_KEY(self) -> str:
+        return os.getenv("ALPACA_SECRET_KEY", "")
+
+    @property
+    def ALPACA_BASE_URL(self) -> str:
+        return os.getenv("ALPACA_BASE_URL", "https://paper-api.alpaca.markets")
+
+    # ── Google Gemini ─────────────────────────────────────────────────────
+    @property
+    def GEMINI_API_KEY(self) -> str:
+        return os.getenv("GEMINI_API_KEY", "")
+
+    GEMINI_MODEL: str = "gemini-3.6-flash"
 
     # ── Trading Universe ────────────────────────────────────────────────────
-    WATCHLIST: List[str] = os.getenv("WATCHLIST", "AAPL,TSLA,NVDA,MSFT,GOOGL").split(",")
+    @property
+    def WATCHLIST(self) -> List[str]:
+        return os.getenv("WATCHLIST", "AAPL,TSLA,NVDA,MSFT,GOOGL").split(",")
 
     # ── Risk Limits ─────────────────────────────────────────────────────────
-    MAX_LOSS_PER_TRADE:          float = float(os.getenv("MAX_LOSS_PER_TRADE", 2000))
-    MAX_DAILY_LOSS:              float = float(os.getenv("MAX_DAILY_LOSS", 8000))
-    MAX_POSITIONS:               int   = int(os.getenv("MAX_POSITIONS", 8))
-    MAX_PORTFOLIO_CONCENTRATION: float = float(os.getenv("MAX_PORTFOLIO_CONCENTRATION", 0.15))
+    @property
+    def MAX_LOSS_PER_TRADE(self) -> float:
+        return float(os.getenv("MAX_LOSS_PER_TRADE", 2000))
+
+    @property
+    def MAX_DAILY_LOSS(self) -> float:
+        return float(os.getenv("MAX_DAILY_LOSS", 8000))
+
+    @property
+    def MAX_POSITIONS(self) -> int:
+        return int(os.getenv("MAX_POSITIONS", 8))
+
+    @property
+    def MAX_PORTFOLIO_CONCENTRATION(self) -> float:
+        return float(os.getenv("MAX_PORTFOLIO_CONCENTRATION", 0.15))
 
     # ── Position Exit Thresholds ─────────────────────────────────────────────
-    # Take-profit: close position when unrealized gain >= this fraction of cost
-    TAKE_PROFIT_PCT:      float = float(os.getenv("TAKE_PROFIT_PCT", 0.50))   # 50%
-    # Stop-loss: close position when unrealized loss >= this fraction of cost
-    STOP_LOSS_PCT:        float = float(os.getenv("STOP_LOSS_PCT",   0.40))   # 40%
-    # Near-expiry: close if DTE <= this many days (avoid pin risk / worthless expiry)
-    CLOSE_DTE_THRESHOLD:  int   = int(os.getenv("CLOSE_DTE_THRESHOLD", 1))
+    @property
+    def TAKE_PROFIT_PCT(self) -> float:
+        return float(os.getenv("TAKE_PROFIT_PCT", 0.50))
+
+    @property
+    def STOP_LOSS_PCT(self) -> float:
+        return float(os.getenv("STOP_LOSS_PCT", 0.40))
+
+    @property
+    def CLOSE_DTE_THRESHOLD(self) -> int:
+        return int(os.getenv("CLOSE_DTE_THRESHOLD", 1))
 
     # ── Market Hours (Eastern) ──────────────────────────────────────────────
-    MARKET_OPEN:  str = os.getenv("MARKET_OPEN",  "09:30")
-    MARKET_CLOSE: str = os.getenv("MARKET_CLOSE", "15:30")
+    @property
+    def MARKET_OPEN(self) -> str:
+        return os.getenv("MARKET_OPEN", "09:30")
+
+    @property
+    def MARKET_CLOSE(self) -> str:
+        return os.getenv("MARKET_CLOSE", "15:30")
 
     # ── Agent Schedule ──────────────────────────────────────────────────────
-    RUN_INTERVAL_MINUTES: int = int(os.getenv("RUN_INTERVAL_MINUTES", 30))
+    @property
+    def RUN_INTERVAL_MINUTES(self) -> int:
+        return int(os.getenv("RUN_INTERVAL_MINUTES", 30))
 
     # ── Mode ────────────────────────────────────────────────────────────────
-    DRY_RUN:   bool = os.getenv("DRY_RUN", "false").lower() == "true"
-    LOG_LEVEL: str  = os.getenv("LOG_LEVEL", "INFO")
+    @property
+    def DRY_RUN(self) -> bool:
+        return os.getenv("DRY_RUN", "false").lower() == "true"
+
+    @property
+    def LOG_LEVEL(self) -> str:
+        return os.getenv("LOG_LEVEL", "INFO")
 
     # ── Paths ────────────────────────────────────────────────────────────────
     DATA_DIR             = "data"
@@ -55,23 +101,23 @@ class Config:
     PORTFOLIO_HISTORY    = f"{DATA_DIR}/portfolio_history.json"
 
     # ── Option-selection defaults ────────────────────────────────────────────
-    # Target days-to-expiry window when picking a contract
     MIN_DTE: int = 7
     MAX_DTE: int = 45
-    # Target delta range (absolute value)
     TARGET_DELTA_MIN: float = 0.30
     TARGET_DELTA_MAX: float = 0.50
 
-    @classmethod
-    def validate(cls) -> bool:
+    def validate(self) -> bool:
         """Raise ValueError if any required API key is missing."""
         required = ["ALPACA_API_KEY", "ALPACA_SECRET_KEY", "GEMINI_API_KEY"]
-        missing = [k for k in required if not getattr(cls, k)]
+        missing = [k for k in required if not getattr(self, k)]
         if missing:
             raise ValueError(f"Missing required env vars: {', '.join(missing)}")
         return True
 
-    @classmethod
-    def ensure_data_dir(cls) -> None:
+    def ensure_data_dir(self) -> None:
         """Create data/ directory if it doesn't exist."""
-        os.makedirs(cls.DATA_DIR, exist_ok=True)
+        os.makedirs(self.DATA_DIR, exist_ok=True)
+
+
+# Singleton — all other modules do `from .config import Config`
+Config = _Config()
