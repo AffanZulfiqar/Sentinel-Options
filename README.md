@@ -1,19 +1,127 @@
-# Sentinel Options
+# ⚡ Sentinel Options
 
-An autonomous options trading agent that monitors news sentiment and executes options trades on Alpaca Paper Trading.
+**Autonomous AI Options Trading Agent — Alpaca × lablab.ai Hackathon 2026**
 
-## How it works
+> AI reads the news. Code picks the contract. Math decides the risk. No human in the loop.
 
-The agent runs on a 30-minute loop during market hours. Each cycle it:
+Sentinel Options is a fully autonomous options trading agent that ingests real-time financial news, extracts actionable sentiment signals using an LLM, selects ATM option contracts via the Alpaca Trading API, enforces strict deterministic risk controls, and executes paper trades — all without human intervention.
 
-1. Pulls recent headlines from Google News for a configurable watchlist of tickers
-2. Sends them through Claude (Anthropic) to get a structured sentiment signal — bullish, bearish, neutral — along with a confidence score
-3. Looks up the live option chain on Alpaca and selects the nearest ATM contract in the 7–45 DTE window
-4. Runs the proposal through a deterministic risk gate before anything gets placed
-5. Submits a DAY limit order at the bid-ask midpoint if the gate passes
-6. At the start of every cycle, checks open positions and closes any that have hit the take-profit, stop-loss, or near-expiry thresholds
+**Live Dashboard**: [Railway Deployment URL]  
+**Hackathon**: Alpaca AI Trading Agents Hackathon (Aug 28 – Sep 4, 2026)  
+**Starting Balance**: $100,000 (Alpaca Paper Trading)
 
-The design principle is simple: the AI reads and interprets, the code decides and acts. Claude has no ability to place orders or bypass any of the risk checks.
+---
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    SENTINEL OPTIONS ENGINE                       │
+│                   (runs every 30 minutes)                        │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│   ┌──────────┐   ┌──────────┐   ┌──────────────┐               │
+│   │ Step 0   │   │ Step 1   │   │   Step 2     │               │
+│   │ Position │──▶│  News    │──▶│    NLP       │               │
+│   │ Monitor  │   │ Scraper  │   │  Sentiment   │               │
+│   └──────────┘   └──────────┘   └──────┬───────┘               │
+│        │              │                 │                        │
+│   Check exits    Google News     LLM structured                 │
+│   TP/SL/Expiry   RSS feeds      JSON analysis                   │
+│                                        │                        │
+│                                        ▼                        │
+│   ┌──────────┐   ┌──────────┐   ┌──────────────┐               │
+│   │ Step 5   │   │ Step 4   │   │   Step 3     │               │
+│   │ Alpaca   │◀──│  Risk    │◀──│    Trade     │               │
+│   │ Executor │   │  Gate    │   │   Proposer   │               │
+│   └──────────┘   └──────────┘   └──────────────┘               │
+│        │              │                 │                        │
+│   Submit order   Deterministic     ATM option                   │
+│   via Trading    mathematical      selection                    │
+│   API            rules (NO AI)     7-45 DTE                    │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Design Principle
+
+**The AI is the least-trusted component.** It can only read news and output a structured JSON signal. It has no access to the broker, no ability to place orders, and no way to bypass the risk gate. Every dollar decision is made by deterministic code.
+
+---
+
+## Pipeline Details
+
+### Step 0 — Position Monitor
+Scans all open option positions before deploying new capital. Automatically closes positions that have hit:
+- **Take-profit**: +50% unrealized gain
+- **Stop-loss**: -40% unrealized loss
+- **Near-expiry**: ≤ 1 day until expiration
+
+### Step 1 — News Scraper
+Pulls 10 recent headlines per ticker from **Google News RSS** for each symbol in the watchlist (AAPL, TSLA, NVDA, MSFT, GOOGL).
+
+### Step 2 — NLP Sentiment Analyzer
+Sends headlines to an LLM with a structured prompt. The model returns a JSON object:
+```json
+{
+  "sentiment": "BULLISH",
+  "confidence": 0.82,
+  "suggested_trade": "CALL",
+  "reasoning": "Multiple sources report strong Q3 earnings beat..."
+}
+```
+Only signals with **confidence ≥ 0.65** proceed to trade proposal.
+
+### Step 3 — Trade Proposer
+Queries the **Alpaca Trading API** for the live option chain. Selects the nearest at-the-money (ATM) contract within a 7–45 DTE window. Calculates position size based on risk limits.
+
+### Step 4 — Deterministic Risk Gate
+Pure mathematical rules — **no AI in this layer**:
+
+| Rule | Threshold |
+|------|-----------|
+| Market hours only | 09:30–15:30 ET |
+| Max cost per trade | $2,000 |
+| Max open positions | 8 |
+| Max daily loss | $8,000 |
+| Single-ticker concentration | ≤ 25% of portfolio |
+| Min sentiment confidence | 0.65 |
+
+### Step 5 — Alpaca Executor
+Submits a DAY limit order at the bid-ask midpoint via the **Alpaca Trading API**. Logs the full trade details to an immutable JSON audit trail.
+
+---
+
+## Live Dashboard
+
+The Streamlit dashboard provides:
+
+- **Real-time portfolio equity curve** with Plotly charts
+- **Metric cards**: equity, P&L, executed trades, risk gate refusals, open positions
+- **Scrolling sentiment ticker** with live signal data
+- **Architecture & Pipeline tab** documenting the full system for judges
+- **Risk Gate Audit tab** showing every refused trade with reasons
+- **Sentiment Intelligence tab** with per-ticker breakdown charts
+- **Interactive AI Sandbox** — test any ticker on-demand through the full pipeline
+- **One-click cycle trigger** — run the full 6-stage pipeline from the UI
+
+---
+
+## Technology Stack
+
+| Component | Technology |
+|-----------|-----------|
+| Language | Python 3.11 |
+| Broker | Alpaca Trading API (Paper) |
+| Market Data | Alpaca Market Data API |
+| NLP Engine | LLM (structured sentiment extraction) |
+| News Source | Google News RSS |
+| Risk Layer | Deterministic Python (no AI) |
+| Dashboard | Streamlit + Plotly |
+| Deployment | Railway |
+| Logging | JSON audit trail |
+
+---
 
 ## Setup
 
@@ -23,15 +131,15 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-Copy `.env.example` to `.env` and fill in your keys:
+Create a `.env` file:
 
 ```
-ALPACA_API_KEY=...
-ALPACA_SECRET_KEY=...
-ANTHROPIC_API_KEY=...
+ALPACA_API_KEY=your_key
+ALPACA_SECRET_KEY=your_secret
+GEMINI_API_KEY=your_key
 ```
 
-Verify your Alpaca connection:
+Verify connection:
 
 ```bash
 python scripts/setup_alpaca.py
@@ -39,7 +147,7 @@ python scripts/setup_alpaca.py
 
 ## Running
 
-Start the trading agent:
+Start the autonomous agent:
 
 ```bash
 python -m src.agent_controller
@@ -51,64 +159,39 @@ Launch the dashboard (separate terminal):
 streamlit run dashboard/dashboard.py
 ```
 
-## Risk controls
+Or run both together (used for deployment):
 
-All limits are enforced in `src/risk_gate.py`. None of them can be overridden by the AI layer.
+```bash
+streamlit run streamlit_app.py
+```
 
-| Control | Value |
-|---------|-------|
-| Max loss per trade | $2,000 |
-| Max daily loss | $8,000 |
-| Max open positions | 8 |
-| Max concentration per ticker | 15% |
-| Market hours | 09:30–15:30 ET |
-| Min sentiment confidence | 0.65 |
+---
 
-Position exits are handled separately in `src/position_monitor.py`:
-
-| Rule | Threshold |
-|------|-----------|
-| Take-profit | +50% unrealized gain |
-| Stop-loss | -40% unrealized loss |
-| Near-expiry close | DTE ≤ 1 day |
-
-## Project structure
+## Project Structure
 
 ```
 src/
-  agent_controller.py   – main loop and scheduler
-  config.py             – environment config
-  news_fetcher.py       – Google News RSS
-  sentiment_analyzer.py – Claude integration
-  trade_proposer.py     – option chain selection (live ATM targeting)
-  risk_gate.py          – deterministic risk checks
+  agent_controller.py   – main autonomous loop & scheduler
+  config.py             – environment config & validation
+  news_fetcher.py       – Google News RSS scraper
+  sentiment_analyzer.py – LLM sentiment extraction
+  trade_proposer.py     – Alpaca option chain selection (ATM targeting)
+  risk_gate.py          – deterministic risk checks (no AI)
   position_monitor.py   – exit logic (take-profit, stop-loss, expiry)
   trade_executor.py     – Alpaca order placement
   portfolio_tracker.py  – P&L and position tracking
   logger.py             – JSON audit log
 
 dashboard/
-  dashboard.py          – Streamlit UI
+  dashboard.py          – Streamlit interactive dashboard
 
 scripts/
   setup_alpaca.py       – credential validation
   test_trade.py         – single test order
-  reset_account.py      – paper account reset helper
+  reset_account.py      – paper account reset
 
 data/                   – runtime JSON logs (git-ignored)
 ```
-
-## Environment variables
-
-| Variable | Description |
-|----------|-------------|
-| `ALPACA_API_KEY` | Alpaca paper trading key |
-| `ALPACA_SECRET_KEY` | Alpaca paper trading secret |
-| `ANTHROPIC_API_KEY` | Anthropic API key |
-| `WATCHLIST` | Comma-separated tickers (default: AAPL,TSLA,NVDA,MSFT,GOOGL) |
-| `DRY_RUN` | Set to `true` to log trades without submitting orders |
-| `TAKE_PROFIT_PCT` | Exit threshold for gains (default: 0.50) |
-| `STOP_LOSS_PCT` | Exit threshold for losses (default: 0.40) |
 
 ## License
 
