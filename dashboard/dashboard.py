@@ -650,7 +650,7 @@ with tab_sandbox:
                         st.json(prop)
                         portfolio_t = PortfolioTracker()
                         gate = RiskGate(portfolio_t)
-                        ok, reason = gate.check(prop)
+                        ok, reason = gate.approve(prop)
                         if ok:
                             st.success("✅ **Risk Gate PASSED** — would execute live!")
                         else:
