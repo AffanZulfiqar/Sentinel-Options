@@ -308,8 +308,20 @@ df_sent    = pd.DataFrame(sentiment_log)
 df_port    = pd.DataFrame(portfolio_hist)
 
 START_EQUITY   = 100_000
-cur_equity     = float(df_port["equity"].iloc[-1])        if not df_port.empty and "equity"         in df_port else START_EQUITY
-open_positions = int(df_port["open_positions"].iloc[-1])  if not df_port.empty and "open_positions" in df_port else 0
+
+# Fetch live positions directly from Alpaca so it ALWAYS matches the CLI
+from alpaca.trading.client import TradingClient
+try:
+    _live_client = TradingClient(Config.ALPACA_API_KEY, Config.ALPACA_SECRET_KEY, paper=True)
+    _live_acct = _live_client.get_account()
+    _live_positions = _live_client.get_all_positions()
+    cur_equity = float(_live_acct.portfolio_value)
+    open_positions = len(_live_positions)
+except Exception:
+    cur_equity = START_EQUITY
+    open_positions = 0
+    _live_positions = []
+
 total_pnl      = cur_equity - START_EQUITY
 pnl_pct        = (total_pnl / START_EQUITY) * 100
 
@@ -546,6 +558,22 @@ with tab_exec:
         disp = df_trades[cols].sort_values("timestamp",ascending=False) if "timestamp" in df_trades else df_trades[cols]
         disp = disp.rename(columns={"timestamp":"Time","option_type":"Type","mid_price":"Fill $","estimated_cost":"Cost $"})
         st.dataframe(disp, use_container_width=True, hide_index=True)
+        
+    st.markdown("---")
+    st.markdown("#### 🟢 Live Open Positions (Direct from Alpaca)")
+    if not _live_positions:
+        st.info("No open positions currently held in Alpaca.")
+    else:
+        pos_data = []
+        for p in _live_positions:
+            pos_data.append({
+                "Symbol": p.symbol,
+                "Qty": int(p.qty),
+                "Avg Cost": f"${float(p.avg_entry_price):.2f}",
+                "Current Value": f"${float(p.market_value):.2f}",
+                "Unrealized P&L": f"${float(p.unrealized_pl):.2f}"
+            })
+        st.dataframe(pd.DataFrame(pos_data), use_container_width=True, hide_index=True)
 
 
 # ── Tab: Refused Trades ───────────────────────────────────────────────────────
