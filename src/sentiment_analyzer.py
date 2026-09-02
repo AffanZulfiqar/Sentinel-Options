@@ -134,11 +134,14 @@ class SentimentAnalyzer:
 
     def analyze_all(self, news_by_ticker: Dict[str, List[Dict]]) -> List[Dict]:
         """Analyze all tickers and return a list of sentiment dicts."""
+        import time
         results = []
         for ticker, articles in news_by_ticker.items():
             result = self.analyze(ticker, articles)
             if result:
                 results.append(result)
+            # Sleep briefly to avoid tripping the Gemini Free Tier burst rate limit (15 RPM)
+            time.sleep(4.0)
         return results
 
     # ── private helpers ───────────────────────────────────────────────────────
