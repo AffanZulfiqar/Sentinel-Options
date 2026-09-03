@@ -183,7 +183,7 @@ class TradeProposer:
         Select the best contract:
         1. If spot_price is available, find the strike closest to spot (ATM).
            Among ties, prefer contracts within the configured delta range if
-           delta is available.
+           delta is available, and prioritize contracts with Open Interest > 0.
         2. Without spot_price, fall back to the median-strike heuristic.
         """
         if not contracts:
@@ -197,13 +197,20 @@ class TradeProposer:
                 def atm_distance(c):
                     return abs(float(c.strike_price or 0) - spot_price)
 
-                # Also build a delta score: prefer delta in [TARGET_DELTA_MIN, TARGET_DELTA_MAX]
                 def score(c):
                     dist = atm_distance(c)
                     delta = abs(float(getattr(c, "delta", 0) or 0))
                     in_range = Config.TARGET_DELTA_MIN <= delta <= Config.TARGET_DELTA_MAX
-                    # Primary: closeness to ATM; secondary: prefer in-range delta
-                    return (dist, 0 if in_range else 1)
+                    
+                    # Check for basic liquidity via open interest (if available)
+                    oi = float(getattr(c, "open_interest", 0) or 0)
+                    has_liquidity = oi > 0
+                    
+                    # Score tuple: 
+                    # 1. Dist to ATM (lower is better)
+                    # 2. Has liquidity (0 is better than 1)
+                    # 3. Delta in range (0 is better than 1)
+                    return (dist, 0 if has_liquidity else 1, 0 if in_range else 1)
 
                 return min(sorted_c, key=score)
             else:

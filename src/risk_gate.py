@@ -39,6 +39,8 @@ class RiskGate:
             self._check_trade_cost,
             self._check_concentration,
             self._check_confidence,
+            self._check_liquidity,
+            self._check_spread,
         ]
         for check in checks:
             passed, reason = check(proposal)
@@ -125,6 +127,26 @@ class RiskGate:
         confidence = proposal.get("sentiment", {}).get("confidence", 0)
         if confidence < 0.65:
             return False, f"Confidence {confidence:.2f} < 0.65 threshold"
+        return True, ""
+
+    @staticmethod
+    def _check_liquidity(proposal: Dict) -> Tuple[bool, str]:
+        """Refuse if the option has zero bid or ask (illiquid)."""
+        bid = proposal.get("bid", 0)
+        ask = proposal.get("ask", 0)
+        if bid <= 0 or ask <= 0:
+            return False, "Zero liquidity (Bid or Ask is 0.0)"
+        return True, ""
+
+    @staticmethod
+    def _check_spread(proposal: Dict) -> Tuple[bool, str]:
+        """Refuse if the bid-ask spread is greater than 10% of the ask price."""
+        bid = proposal.get("bid", 0)
+        ask = proposal.get("ask", 0)
+        if ask > 0:
+            spread_pct = (ask - bid) / ask
+            if spread_pct > 0.10:
+                return False, f"Spread too wide ({spread_pct:.1%} > 10.0%)"
         return True, ""
 
     # ── helpers ───────────────────────────────────────────────────────────────

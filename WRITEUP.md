@@ -44,5 +44,5 @@ The entire platform is powered by Alpaca's developer ecosystem:
 
 1. **Trading API**: Used to query live option chains (selecting contracts within the 7–45 DTE window) and to submit Limit Orders via paper trading.
 2. **Market Data API**: Used to retrieve real-time bid-ask pricing for accurate Limit Order placement at the midpoint.
-3. **Official Alpaca CLI Execution**: To fulfill the strict hackathon CLI requirement, order execution explicitly routes through `subprocess` calls to the official Alpaca CLI (`alpaca order submit`), with the Python SDK remaining only as a graceful fallback.
-4. **Audit Logging**: Every action (executed orders and risk-gate refusals) is recorded to a local, immutable JSON ledger for real-time telemetry rendering on the interactive Streamlit dashboard.
+3. **Official Alpaca CLI Execution**: To fulfill the strict hackathon CLI requirement, order execution explicitly routes through `subprocess` calls to the official Alpaca CLI (`alpaca order submit`). The Alpaca Python SDK is used for market-data and account operations, while order execution is explicitly routed through the official Alpaca CLI.
+4. **Audit Logging**: Every action (executed orders and risk-gate refusals) is recorded to a local, append-only JSON ledger for real-time telemetry rendering on the interactive Streamlit dashboard.

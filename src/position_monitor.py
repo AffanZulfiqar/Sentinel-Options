@@ -5,7 +5,7 @@ when exit criteria are met.
 Exit rules (deterministic, no AI involvement):
   - Take-profit : unrealized P&L >= +TAKE_PROFIT_PCT  (default 50%)
   - Stop-loss   : unrealized P&L <= -STOP_LOSS_PCT    (default 40%)
-  - Near-expiry : DTE <= CLOSE_DTE_THRESHOLD days      (default 1)
+  - Near-expiry : DTE <= CLOSE_DTE_THRESHOLD days     (default 3)
 
 Runs as part of every agent cycle BEFORE the news/trade loop so that
 capital is freed up before new proposals are evaluated.

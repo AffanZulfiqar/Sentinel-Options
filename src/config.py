@@ -69,7 +69,7 @@ class _Config:
 
     @property
     def CLOSE_DTE_THRESHOLD(self) -> int:
-        return int(os.getenv("CLOSE_DTE_THRESHOLD", 1))
+        return int(os.getenv("CLOSE_DTE_THRESHOLD", 3))
 
     # ── Market Hours (Eastern) ──────────────────────────────────────────────
     @property

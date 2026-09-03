@@ -90,7 +90,7 @@ Pure mathematical rules — **no AI in this layer**:
 ### Step 5 — Alpaca Executor
 The execution path guarantees compliance by explicitly routing the trade through the official Alpaca CLI. The pipeline flow is:
 `Python Trade Executor` → `Alpaca Official CLI (subprocess)` → `Alpaca Trading API` → `Paper Account`.
-Logs the real Alpaca order ID and full trade details to an immutable JSON audit trail.
+Logs the real Alpaca order ID and full trade details to an append-only JSON audit trail.
 
 ---
 
@@ -146,6 +146,15 @@ Verify connection:
 ```bash
 python scripts/setup_alpaca.py
 ```
+
+### Alpaca CLI Dependency
+Order execution strictly requires the official Alpaca CLI, which is explicitly called via `subprocess.run()`. Since it is a system binary, it is not included in `requirements.txt`.
+
+To install it locally for testing:
+- **macOS/Linux**: `brew install alpacahq/tap/cli` (or download the binary from the [Alpaca GitHub Release page](https://github.com/alpacahq/cli/releases))
+- **Windows**: Download the `.exe` from the [GitHub Release page](https://github.com/alpacahq/cli/releases) and place `alpaca.exe` in this project's root folder.
+
+*Note: For cloud deployments (like Railway), the CLI binary is automatically downloaded during the build step (or gracefully ignored if the environment does not support it).*
 
 ## Running
 
