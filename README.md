@@ -147,20 +147,20 @@ python scripts/setup_alpaca.py
 
 ## Running
 
-You can interact with Sentinel Options via the **Dashboard** or the **CLI**.
+You can interact with Sentinel Options via the **Dashboard** or the **Operator Tool**.
 
-### 1. The CLI (Command Line Interface)
-Order execution strictly routes through **Alpaca's official CLI** (`alpaca order submit`) to fulfill the hackathon compliance requirement. `cli.py` is a separate, dedicated operator tool used for quick status checks and manual analysis.
+### 1. The Operator Tool (Local Management)
+Order execution strictly routes through **Alpaca's official CLI** (`alpaca order submit`) to fulfill the hackathon compliance requirement. `operator.py` is a separate, dedicated operator tool used for quick status checks and manual analysis.
 
 ```bash
 # Check your Alpaca portfolio status
-python cli.py status
+python operator.py status
 
 # Run sentiment analysis on a specific ticker
-python cli.py analyze AAPL
+python operator.py analyze AAPL
 
 # Trigger one full autonomous pipeline cycle
-python cli.py run
+python operator.py run
 ```
 
 ### 2. The Dashboard & Background Agent
