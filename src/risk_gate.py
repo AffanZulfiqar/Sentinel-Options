@@ -12,21 +12,19 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from typing import Dict, List, Tuple
-
-import pytz
+from alpaca.trading.client import TradingClient
 
 from .config import Config
 from .logger import get_logger, log_refused_trade
 
 log = get_logger(__name__)
 
-ET = pytz.timezone("America/New_York")
-
 
 class RiskGate:
     def __init__(self, portfolio_tracker):
         # We need portfolio info to evaluate concentration & daily-loss limits
         self._portfolio = portfolio_tracker
+        self._client = TradingClient(Config.ALPACA_API_KEY, Config.ALPACA_SECRET_KEY, paper=True)
 
     # ── public entry point ────────────────────────────────────────────────────
 
@@ -68,18 +66,17 @@ class RiskGate:
 
     # ── individual checks ─────────────────────────────────────────────────────
 
-    @staticmethod
-    def _check_market_hours(proposal: Dict) -> Tuple[bool, str]:
-        """Refuse trades outside 09:30 – 15:30 ET."""
-        now_et = datetime.now(ET)
-        open_h,  open_m  = map(int, Config.MARKET_OPEN.split(":"))
-        close_h, close_m = map(int, Config.MARKET_CLOSE.split(":"))
-        market_open  = now_et.replace(hour=open_h,  minute=open_m,  second=0, microsecond=0)
-        market_close = now_et.replace(hour=close_h, minute=close_m, second=0, microsecond=0)
-        if not (market_open <= now_et <= market_close):
-            return False, f"Outside market hours ({now_et.strftime('%H:%M')} ET)"
-        if now_et.weekday() >= 5:   # Saturday=5, Sunday=6
-            return False, "Market closed (weekend)"
+    def _check_market_hours(self, proposal: Dict) -> Tuple[bool, str]:
+        """Refuse trades if the Alpaca Market Clock says the market is closed."""
+        try:
+            clock = self._client.get_clock()
+            if not clock.is_open:
+                return False, "Market is closed (Alpaca Clock)"
+        except Exception as e:
+            # If API fails, fail safe (refuse the trade)
+            log.error("Failed to check Alpaca Market Clock: %s", e)
+            return False, "Market Clock API Error"
+            
         return True, ""
 
     def _check_position_count(self, proposal: Dict) -> Tuple[bool, str]:
