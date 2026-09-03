@@ -55,7 +55,7 @@ Sentinel Options is a fully autonomous options trading agent that ingests real-t
 Scans all open option positions before deploying new capital. Automatically closes positions that have hit:
 - **Take-profit**: +50% unrealized gain
 - **Stop-loss**: -40% unrealized loss
-- **Near-expiry**: ≤ 1 day until expiration
+- **Near-expiry**: ≤ 3 DTE until expiration
 
 ### Step 1 — News Scraper
 Pulls 10 recent headlines per ticker from **Google News RSS** for each symbol in the watchlist (AAPL, TSLA, NVDA, MSFT, GOOGL).
@@ -84,7 +84,7 @@ Pure mathematical rules — **no AI in this layer**:
 | Max cost per trade | $2,000 |
 | Max open positions | 8 |
 | Max daily loss | $8,000 |
-| Single-ticker concentration | ≤ 25% of portfolio |
+| Single-ticker concentration | ≤ 15% of portfolio |
 | Min sentiment confidence | 0.65 |
 
 ### Step 5 — Alpaca Executor

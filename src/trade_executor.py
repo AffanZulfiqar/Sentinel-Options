@@ -77,10 +77,10 @@ class TradeExecutor:
                 if not order_id:
                     raise RuntimeError("Alpaca CLI returned no real order ID")
                 status = str(response.get("status", "accepted_by_cli"))
-            except json.JSONDecodeError:
-                # Safe fallback if CLI outputs unexpected text (like an update warning)
-                order_id = f"cli-{uuid.uuid4().hex[:8]}"
-                status = "accepted_by_cli"
+            except json.JSONDecodeError as exc:
+                raise RuntimeError(
+                    f"Alpaca CLI returned non-JSON output: {result.stdout}"
+                ) from exc
             
             log.info("✅ CLI Order submitted successfully: %s qty=%d (Real ID: %s)", symbol, qty, order_id)
             record = self._build_record(proposal, order_id=order_id, status=status)

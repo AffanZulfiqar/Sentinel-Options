@@ -31,7 +31,7 @@ The Risk Gate evaluates every proposed option contract against the following har
 | **Max Cost per Trade** | No single trade can cost more than $2,000. |
 | **Max Open Positions** | The portfolio cannot exceed 8 concurrent open positions. |
 | **Max Daily Loss** | If daily realized losses hit $8,000, the system halts. |
-| **Concentration Cap** | No single ticker can make up > 25% of portfolio equity. |
+| **Concentration Cap** | No single ticker can make up > 15% of portfolio equity. |
 | **Take-Profit / Stop-Loss** | Open positions automatically exit at +50% or -40%. |
 
 If *any* rule fails, the trade is explicitly refused and logged for auditing.
