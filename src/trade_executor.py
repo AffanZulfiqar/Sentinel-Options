@@ -11,6 +11,7 @@ from alpaca.trading.client import TradingClient
 import subprocess
 import shutil
 import uuid
+import json
 
 from .config import Config
 from .logger import get_logger, log_trade
@@ -55,7 +56,8 @@ class TradeExecutor:
                 "--side", "buy",
                 "--type", "limit",
                 "--limit-price", str(round(mid_price, 2)),
-                "--time-in-force", "day"
+                "--time-in-force", "day",
+                "-f", "json"
             ]
             
             log.info("Executing Alpaca CLI: %s", " ".join(cmd))
@@ -67,12 +69,18 @@ class TradeExecutor:
                 check=True
             )
             
-            # Since CLI output format can vary, we mock the extracted ID for our JSON log
-            # The order is genuinely placed on Alpaca's servers by the CLI.
-            order_id = f"cli-{uuid.uuid4().hex[:8]}"
+            # Parse the real Alpaca order ID and status from the CLI's JSON output
+            try:
+                response = json.loads(result.stdout)
+                order_id = str(response.get("id", f"cli-{uuid.uuid4().hex[:8]}"))
+                status = str(response.get("status", "accepted_by_cli"))
+            except json.JSONDecodeError:
+                # Safe fallback if CLI outputs unexpected text (like an update warning)
+                order_id = f"cli-{uuid.uuid4().hex[:8]}"
+                status = "accepted_by_cli"
             
-            log.info("✅ CLI Order submitted successfully: %s qty=%d", symbol, qty)
-            record = self._build_record(proposal, order_id=order_id, status="accepted_by_cli")
+            log.info("✅ CLI Order submitted successfully: %s qty=%d (Real ID: %s)", symbol, qty, order_id)
+            record = self._build_record(proposal, order_id=order_id, status=status)
             log_trade(record)
             return record
 

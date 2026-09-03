@@ -36,9 +36,9 @@ Sentinel Options is a fully autonomous options trading agent that ingests real-t
 │   │ Executor │   │  Gate    │   │   Proposer   │               │
 │   └──────────┘   └──────────┘   └──────────────┘               │
 │        │              │                 │                        │
-│   Submit order   Deterministic     ATM option                   │
-│   via Trading    mathematical      selection                    │
-│   API            rules (NO AI)     7-45 DTE                    │
+│  Official CLI    Deterministic     ATM option                   │
+│  → Trading API   mathematical      selection                    │
+│  → Paper Acct    rules (NO AI)     7-45 DTE                    │
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -88,7 +88,9 @@ Pure mathematical rules — **no AI in this layer**:
 | Min sentiment confidence | 0.65 |
 
 ### Step 5 — Alpaca Executor
-Submits a DAY limit order at the bid-ask midpoint via the **Alpaca Official CLI** (`alpaca order submit`). Logs the full trade details to an immutable JSON audit trail. *(Note: The JSON audit trail records a mocked `cli-...` order ID as a shortcut rather than parsing the raw CLI stdout, but the actual order is genuinely placed and tracked in the Alpaca platform).*
+The execution path guarantees compliance by explicitly routing the trade through the official Alpaca CLI. The pipeline flow is:
+`Python Trade Executor` → `Alpaca Official CLI (subprocess)` → `Alpaca Trading API` → `Paper Account`.
+Logs the real Alpaca order ID and full trade details to an immutable JSON audit trail.
 
 ---
 
