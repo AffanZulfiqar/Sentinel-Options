@@ -129,6 +129,7 @@ class TradeProposer:
             "bid":            bid,
             "ask":            ask,
             "mid_price":      mid,
+            "iv":             float(getattr(best, "implied_volatility", 0) or 0),
             "contracts":      contracts_qty,
             "estimated_cost": round(mid * 100 * contracts_qty, 2),
             "sentiment":      sentiment,

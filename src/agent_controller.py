@@ -45,6 +45,7 @@ class AgentController:
 
         Config.validate()
         Config.ensure_data_dir()
+        self._validate_cli()
 
         self.portfolio  = PortfolioTracker()
         self.analyzer   = SentimentAnalyzer()
@@ -52,6 +53,14 @@ class AgentController:
         self.risk_gate  = RiskGate(self.portfolio)
         self.executor   = TradeExecutor(self.portfolio)
         self.monitor    = PositionMonitor(self.portfolio)
+
+    def _validate_cli(self) -> None:
+        import shutil
+        if not shutil.which("alpaca") and not Config.DRY_RUN:
+            log.warning("⚠️ ALPACA CLI NOT FOUND IN PATH! Order execution via subprocess will fail in LIVE mode.")
+            log.warning("   Please install it: 'brew install alpacahq/tap/cli' or download the binary.")
+            log.warning("   (If running on Railway, this is expected if the binary download was removed from the build step.)")
+
 
     # ── main cycle ────────────────────────────────────────────────────────────
 

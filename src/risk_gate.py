@@ -41,6 +41,7 @@ class RiskGate:
             self._check_confidence,
             self._check_liquidity,
             self._check_spread,
+            self._check_iv_limit,
         ]
         for check in checks:
             passed, reason = check(proposal)
@@ -147,6 +148,14 @@ class RiskGate:
             spread_pct = (ask - bid) / ask
             if spread_pct > 0.10:
                 return False, f"Spread too wide ({spread_pct:.1%} > 10.0%)"
+        return True, ""
+
+    @staticmethod
+    def _check_iv_limit(proposal: Dict) -> Tuple[bool, str]:
+        """Refuse if Implied Volatility is extremely high (e.g. > 150%)."""
+        iv = proposal.get("iv", 0)
+        if iv > 1.50:
+            return False, f"IV too high ({iv:.1%} > 150.0%)"
         return True, ""
 
     # ── helpers ───────────────────────────────────────────────────────────────
