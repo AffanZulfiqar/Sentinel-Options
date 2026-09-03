@@ -1,6 +1,6 @@
 [build]
 builder = "NIXPACKS"
-buildCommand = "curl -fsSL https://github.com/alpacahq/cli/releases/latest/download/alpaca_Linux_x86_64.tar.gz | tar -xz && pip install -r requirements.txt"
+buildCommand = "pip install -r requirements.txt"
 
 [deploy]
 startCommand = "streamlit run streamlit_app.py --server.port=$PORT --server.address=0.0.0.0 --server.headless=true"
