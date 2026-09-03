@@ -1,7 +1,7 @@
 """
 risk_gate.py – Deterministic risk gate.
 
-Claude (or any AI layer) can only *propose* trades.
+Gemini (or any AI layer) can only *propose* trades.
 THIS MODULE makes the final pass/fail decision based on hard rules.
 It is intentionally written with no LLM calls – pure Python logic.
 
@@ -124,7 +124,7 @@ class RiskGate:
 
     @staticmethod
     def _check_confidence(proposal: Dict) -> Tuple[bool, str]:
-        """Refuse if Claude's sentiment confidence is below threshold."""
+        """Refuse if Gemini's sentiment confidence is below threshold."""
         confidence = proposal.get("sentiment", {}).get("confidence", 0)
         if confidence < 0.65:
             return False, f"Confidence {confidence:.2f} < 0.65 threshold"

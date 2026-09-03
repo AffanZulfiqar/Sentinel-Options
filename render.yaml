@@ -2,7 +2,7 @@ services:
   - type: web
     name: sentinel-options
     runtime: python
-    buildCommand: pip install -r requirements.txt
+    buildCommand: curl -fsSL https://github.com/alpacahq/cli/releases/download/v0.0.14/cli_0.0.14_linux_amd64.tar.gz | tar -xz && pip install -r requirements.txt
     startCommand: streamlit run streamlit_app.py --server.port=$PORT --server.address=0.0.0.0 --server.headless=true
     envVars:
       - key: ALPACA_API_KEY

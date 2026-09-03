@@ -3,7 +3,7 @@ agent_controller.py – Main autonomous loop.
 
 Orchestrates the full pipeline every RUN_INTERVAL_MINUTES:
   1. Fetch news
-  2. Analyze sentiment (Claude)
+  2. Analyze sentiment (Gemini)
   3. Propose trades (option chain)
   4. Risk gate
   5. Execute approved trades

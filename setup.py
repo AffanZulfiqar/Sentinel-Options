@@ -8,7 +8,7 @@ from setuptools import setup, find_packages
 setup(
     name="news-sentiment-agent",
     version="1.0.0",
-    description="Autonomous options trading agent using news sentiment and Claude AI",
+    description="Autonomous options trading agent using news sentiment and Gemini AI",
     packages=find_packages(),
     python_requires=">=3.10",
     install_requires=[

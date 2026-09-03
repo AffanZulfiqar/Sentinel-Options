@@ -57,6 +57,7 @@ class TradeExecutor:
                 "--type", "limit",
                 "--limit-price", str(round(mid_price, 2)),
                 "--time-in-force", "day",
+                "--client-order-id", f"sentinel-{uuid.uuid4().hex[:8]}",
                 "-f", "json"
             ]
             
@@ -72,7 +73,9 @@ class TradeExecutor:
             # Parse the real Alpaca order ID and status from the CLI's JSON output
             try:
                 response = json.loads(result.stdout)
-                order_id = str(response.get("id", f"cli-{uuid.uuid4().hex[:8]}"))
+                order_id = str(response.get("id", ""))
+                if not order_id:
+                    raise RuntimeError("Alpaca CLI returned no real order ID")
                 status = str(response.get("status", "accepted_by_cli"))
             except json.JSONDecodeError:
                 # Safe fallback if CLI outputs unexpected text (like an update warning)
