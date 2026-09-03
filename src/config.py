@@ -95,11 +95,25 @@ class _Config:
         return os.getenv("LOG_LEVEL", "INFO")
 
     # ── Paths ────────────────────────────────────────────────────────────────
-    DATA_DIR             = "data"
-    TRADES_LOG           = f"{DATA_DIR}/trades_log.json"
-    REFUSED_TRADES_LOG   = f"{DATA_DIR}/refused_trades_log.json"
-    SENTIMENT_LOG        = f"{DATA_DIR}/sentiment_log.json"
-    PORTFOLIO_HISTORY    = f"{DATA_DIR}/portfolio_history.json"
+    @property
+    def DATA_DIR(self) -> str:
+        return os.getenv("DATA_DIR", "data")
+
+    @property
+    def TRADES_LOG(self) -> str:
+        return os.path.join(self.DATA_DIR, "trades_log.json")
+
+    @property
+    def REFUSED_TRADES_LOG(self) -> str:
+        return os.path.join(self.DATA_DIR, "refused_trades_log.json")
+
+    @property
+    def SENTIMENT_LOG(self) -> str:
+        return os.path.join(self.DATA_DIR, "sentiment_log.json")
+
+    @property
+    def PORTFOLIO_HISTORY(self) -> str:
+        return os.path.join(self.DATA_DIR, "portfolio_history.json")
 
     # ── Option-selection defaults ────────────────────────────────────────────
     MIN_DTE: int = 7
