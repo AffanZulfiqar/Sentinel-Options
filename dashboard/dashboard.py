@@ -501,11 +501,11 @@ with tab_arch:
             <div style="font-size:0.85rem;font-weight:800;color:#dc2626;margin-bottom:8px;">🛡️ Deterministic Risk Gate</div>
             <ul style="color:#334155;font-size:0.8rem;line-height:1.8;padding-left:16px;margin:0;">
                 <li><b>No AI in risk layer</b> — pure mathematical rules</li>
-                <li>Market hours enforcement (09:30–16:00 ET)</li>
+                <li>Market hours enforcement (Alpaca Market Clock)</li>
                 <li>Max $2,000 cost per trade</li>
                 <li>Max 8 concurrent positions</li>
                 <li>Daily loss limit: $8,000</li>
-                <li>Single-ticker concentration cap: 25%</li>
+                <li>Single-ticker concentration cap: 15%</li>
             </ul>
         </div>
         """, unsafe_allow_html=True)
@@ -551,7 +551,7 @@ with tab_exec:
         st.markdown("""<div style="padding:36px;text-align:center;background:#fff;border:1px solid #e2e8f0;border-radius:12px;">
             <div style="font-size:2rem;margin-bottom:8px;">📭</div>
             <div style="font-weight:700;color:#0f172a;">No trades executed yet</div>
-            <div style="font-size:0.82rem;color:#64748b;margin-top:4px;">Trades execute during market hours (09:30–16:00 ET) when signals pass the risk gate.</div>
+            <div style="font-size:0.82rem;color:#64748b;margin-top:4px;">Trades execute during market hours (validated via Alpaca Market Clock) when signals pass the risk gate.</div>
         </div>""", unsafe_allow_html=True)
     else:
         cols = [c for c in ["timestamp","ticker","option_type","symbol","strike","contracts","mid_price","estimated_cost","status"] if c in df_trades]

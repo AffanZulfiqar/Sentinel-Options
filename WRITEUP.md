@@ -27,7 +27,7 @@ The Risk Gate evaluates every proposed option contract against the following har
 
 | Rule | Threshold |
 |------|-----------|
-| **Market Hours Check** | Trades only execute during open market hours (09:30–16:00 ET). |
+| **Market Hours Check** | Trades execute only when Alpaca's Market Clock reports the market as open. |
 | **Max Cost per Trade** | No single trade can cost more than $2,000. |
 | **Max Open Positions** | The portfolio cannot exceed 8 concurrent open positions. |
 | **Max Daily Loss** | If daily realized losses hit $8,000, the system halts. |

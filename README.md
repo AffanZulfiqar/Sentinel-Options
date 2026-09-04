@@ -80,7 +80,7 @@ Pure mathematical rules — **no AI in this layer**:
 
 | Rule | Threshold |
 |------|-----------|
-| Market hours only | 09:30–16:00 ET |
+| Market hours only | Alpaca Market Clock is open |
 | Max cost per trade | $2,000 |
 | Max open positions | 8 |
 | Max daily loss | $8,000 |
