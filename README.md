@@ -80,7 +80,7 @@ Pure mathematical rules — **no AI in this layer**:
 
 | Rule | Threshold |
 |------|-----------|
-| Market hours only | Alpaca Market Clock is open |
+| Market Hours Check | Trades execute only when Alpaca's Market Clock reports the market as open. |
 | Max cost per trade | $2,000 |
 | Max open positions | 8 |
 | Max daily loss | $8,000 |
