@@ -80,7 +80,7 @@ Pure mathematical rules — **no AI in this layer**:
 
 | Rule | Threshold |
 |------|-----------|
-| Market hours only | 09:30–15:30 ET |
+| Market hours only | 09:30–16:00 ET |
 | Max cost per trade | $2,000 |
 | Max open positions | 8 |
 | Max daily loss | $8,000 |
@@ -116,7 +116,7 @@ The Streamlit dashboard provides:
 | Language | Python 3.11 |
 | Broker | Alpaca Trading API (Paper) |
 | Market Data | Alpaca Market Data API |
-| NLP Engine | LLM (structured sentiment extraction) |
+| NLP Engine | Google Gemini (structured sentiment extraction) |
 | News Source | Google News RSS |
 | Risk Layer | Deterministic Python (no AI) |
 | Dashboard | Streamlit + Plotly |

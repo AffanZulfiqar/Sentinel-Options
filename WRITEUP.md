@@ -27,7 +27,7 @@ The Risk Gate evaluates every proposed option contract against the following har
 
 | Rule | Threshold |
 |------|-----------|
-| **Market Hours Check** | Trades only execute between 09:30–15:30 ET. |
+| **Market Hours Check** | Trades only execute during open market hours (09:30–16:00 ET). |
 | **Max Cost per Trade** | No single trade can cost more than $2,000. |
 | **Max Open Positions** | The portfolio cannot exceed 8 concurrent open positions. |
 | **Max Daily Loss** | If daily realized losses hit $8,000, the system halts. |
@@ -45,4 +45,4 @@ The entire platform is powered by Alpaca's developer ecosystem:
 1. **Trading API**: Used to query live option chains (selecting contracts within the 7–45 DTE window) and to submit Limit Orders via paper trading.
 2. **Market Data API**: Used to retrieve real-time bid-ask pricing for accurate Limit Order placement at the midpoint.
 3. **Official Alpaca CLI Execution**: To fulfill the strict hackathon CLI requirement, order execution explicitly routes through `subprocess` calls to the official Alpaca CLI (`alpaca order submit`). The Alpaca Python SDK is used for market-data and account operations, while order execution is explicitly routed through the official Alpaca CLI.
-4. **Audit Logging**: Every action (executed orders and risk-gate refusals) is recorded to a local, append-only JSON ledger for real-time telemetry rendering on the interactive Streamlit dashboard.
+4. **Audit Logging**: Every action (executed orders and risk-gate refusals) is recorded to a local, append-only JSON audit trail for real-time telemetry rendering on the interactive Streamlit dashboard.

@@ -78,7 +78,7 @@ class _Config:
 
     @property
     def MARKET_CLOSE(self) -> str:
-        return os.getenv("MARKET_CLOSE", "15:30")
+        return os.getenv("MARKET_CLOSE", "16:00")
 
     # ── Agent Schedule ──────────────────────────────────────────────────────
     @property
